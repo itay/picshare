@@ -33,8 +33,7 @@
 
     <script id="albumTemplate" type="text/x-jquery-tmpl">
       <div class="page-header" id="album-header">
-        <h1 id="album-title">${title}</h1>
-        <input id="album-title-input" class="xlarge" id="xlInput" name="xlInput" type="text">
+        <input id="album-title-input" class="xlarge transparent-input" id="xlInput" name="xlInput" type="text" value="${title}">
         <div class="actions-wrapper">
           <div class="album-actions">
             {{each actions}}
@@ -184,17 +183,28 @@
         box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
       }
       
-      div#album-header.editing h1 {
-        display: none;
+      .transparent-input {
+        border: 0px;
+        -webkit-box-shadow: inset 0 0px 0px rgba(0, 0, 0, 0.1), 0 0 0px rgba(82, 168, 236, 0.6);
+        -moz-box-shadow: inset 0 0px 0px rgba(0, 0, 0, 0.1), 0 0 0px rgba(82, 168, 236, 0.6);
+        box-shadow: inset 0 0px 0px rgba(0, 0, 0, 0.1), 0 0 0px rgba(82, 168, 236, 0.6);
+        background: transparent;
       }
       
-      div#album-header.editing input {
-        display: block;
+      .transparent-input:hover {
+        outline: none;
+        border-color: rgba(82, 168, 236, 0.8);
+        -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+        -moz-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+      }
+      
+      .transparent-input:focus {
+        background: whiteSmoke;
       }
       
       div#album-header input {
         margin-left: 5px;
-        display: none;
         width: 75%;
         padding: 0px;
         border: 0px;

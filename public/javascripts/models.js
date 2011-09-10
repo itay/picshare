@@ -21,6 +21,8 @@
       if (this.isNew()) {
         Backbone.Model.prototype.save.apply(this, arguments);
       }
+      
+      picture.metadata.save({"id": this.get("id")});
     },
     
     url: function() {
@@ -31,6 +33,18 @@
       else {
         return base + "/" + this.id;
       }
+    },
+    
+    fetch: function() {
+      // Create the metadata if necessary
+      if (!this.metadata) {
+        this.metadata = new PictureMetadata({id: this.get("id")});
+        this.metadata.picture = this;
+      }
+      
+      // Fetch the image and metadata
+      this.metadata.fetch();
+      Backbone.Model.prototype.fetch.apply(this, arguments);
     }
   });
   
@@ -39,7 +53,7 @@
     },
     
     url: function() { 
-      var base = "/albums/" + this.collection.albumId + "/pictures";
+      var base = this.picture.collection.url();
       return base + "/" + this.id + "/metadata";
     },
   });
@@ -50,14 +64,10 @@
       
       options = options || {}
       this.pictures = options.pictures || new Pictures();
-      this.picturesMetadata = options.metadata || new PicturesMetadata();
       
       this.pictures.bind("change", this.change);
       this.pictures.bind("reset", this.reset);
       this.pictures.bind("remove", this.remove);
-      this.picturesMetadata.bind("change", this.change);
-      this.picturesMetadata.bind("reset", this.reset);
-      this.picturesMetadata.bind("remove", this.remove);
     },
     
     url: function() {
@@ -96,20 +106,11 @@
       Backbone.Model.prototype.save.call(this, attrs, {
         success: function() {
           that.pictures.albumId = that.get("id");
-          that.picturesMetadata.albumId = that.get("id");
           
-          that.each(function(picture, metadata) {
+          that.each(function(picture) {
             picture.save({}, {
               success: function() {
-                metadata.save({"id": picture.get("id")}, {
-                  success: function() {
-                    done();
-                  },
-                  error: function() {
-                    console.log("ERROR1: ", arguments);
-                    options.error.apply(that, arguments);
-                  }
-                });
+                done();
               },
               error: function() {
                 console.log("ERROR2: ", arguments);
@@ -130,10 +131,8 @@
       Backbone.Model.prototype.fetch.call(this, {
         success: function() {
           that.pictures.albumId = that.get("id");
-          that.picturesMetadata.albumId = that.get("id");
           
           that.pictures.fetch();
-          that.picturesMetadata.fetch();
           
           if (options && options.success) {
             options.success.apply(that, arguments);
@@ -147,9 +146,8 @@
       });
     },
     
-    addPicture: function(picture, metadata) {
+    addPicture: function(picture) {
       this.pictures.add(picture);
-      this.picturesMetadata.add(metadata);
       
       this.trigger("add");
     },
@@ -167,9 +165,7 @@
     },
     
     each: function(fn) {
-      _.each(_.zip(this.pictures.toArray(), this.picturesMetadata.toArray()), function(arr) {
-        fn(arr[0], arr[1]);
-      });
+      return this.pictures.each.call(this, fn);
     }
   });
   
@@ -212,28 +208,6 @@
             options.error.apply(that, arguments);
           }
         }
-      });
-    }
-  }),
-  
-  PicturesMetadata = Backbone.Collection.extend({
-    model: PictureMetadata,
-    
-    initialize: function(models, options) {
-      options = options || {};
-      this.albumId = options.albumId;
-    },
-    
-    url: function() {
-      return "/albums/" + this.albumId + "/metadata";
-    },
-    
-    save: function() {
-      // The album should already be created, and there is no "album
-      // metadata" concept, as the metadata is saved for each individual
-      // image.
-      this.each(function(metadata) {
-        metadata.save();
       });
     }
   });

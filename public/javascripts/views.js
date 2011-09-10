@@ -107,7 +107,7 @@
       this.template = templates.album;
       
       _.bindAll(this, "render", "thumbClicked", "saveAlbum", 
-        "shareAlbum", "deleteAlbum", "setAlbum", "editAlbumTitle", "stopEditAlbumTitle");
+        "shareAlbum", "deleteAlbum", "setAlbum", "stopEditAlbumTitle");
     },
     
     events: {
@@ -115,7 +115,6 @@
       "click .album-actions a.save": "saveAlbum",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
-      "click #album-header h1": "editAlbumTitle",
       "blur #album-header input": "stopEditAlbumTitle"
     },
     
@@ -146,19 +145,11 @@
       }
     },
     
-    editAlbumTitle: function(e) {
-      e.preventDefault();
-      this.$("#album-title-input").val(this.$("#album-title").text());
-      this.$("#album-header").addClass("editing");
-      this.$("#album-title-input").focus();
-    },
-    
     stopEditAlbumTitle: function(e) {
       e.preventDefault();
       this.$("#album-header").removeClass("editing");
     
       var newTitle = this.$("#album-title-input").val();
-      this.$("#album-title").text(newTitle);
       this.album.set({name: newTitle});
       
       if (!this.album.isNew()) {
@@ -222,7 +213,7 @@
           this.currentPicture = this.album.pictures.at(0);
         }
         
-        var pictureView = new PictureView({picture: this.currentPicture});
+        var pictureView = new PictureView({picture: this.currentPicture,});
         this.$("#full-size").append(pictureView.render().el);
         
         if (this.album.pictures.length) {
@@ -378,8 +369,10 @@
             size: file.size,
             filename: file.fileName
           });
+          picture.metadata = pictureMetadata;
+          metadata.picture = picture;
           
-          album.addPicture(picture, pictureMetadata);
+          album.addPicture(picture);
         };
         
         fileReader.onerror = function() {
