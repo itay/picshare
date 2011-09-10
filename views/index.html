@@ -1,0 +1,360 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-type">
+    <title>Picshare</title>
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements --> 
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--> 
+
+    <script id="imageTemplate" type="text/x-jquery-tmpl">
+      <img src="${src}"/>
+    </script>
+
+    <script id="thumbTemplate" type="text/x-jquery-tmpl">
+      <a href="" class="thumb">
+        <img src="${src}" id="${id}"/>
+      </a>
+    </script>
+
+    <script id="fullImageTemplate" type="text/x-jquery-tmpl">
+      <img src="${src}" class="full-image"/>
+    </script>
+
+    <script id="albumTemplate" type="text/x-jquery-tmpl">
+      <div class="page-header" id="album-header">
+        <h1>${title}</h1>
+        <div class="actions-wrapper">
+          <div class="album-actions">
+            {{each actions}}
+            <a href="" class="${$value.toLowerCase()}">${$value}</a> {{if ($index + 1) !== actions.length}} | {{/if}} 
+            {{/each}}
+          </div>
+        </div>
+      </div>
+      <div class="row clearfix">
+        <div class="span4 columns" id="thumbs-container">
+          <ul id="thumbs">
+          </ul>
+        </div>
+        <div class="span12 columns" id="full-size">
+        </div>
+      </div>
+    </script>
+
+    <script id="deleteModalTemplate" type="text/x-jquery-tmpl">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Delete Album?</h3>
+          <a href="#" class="close">×</a>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete this album?</p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn danger button1">Yes, make it go away!</a>
+          <a href="#" class="btn secondary button2">Nooooo, I luvz it!</a>
+        </div>
+      </div>
+    </script>
+    
+    <script id="uploadTemplate" type="text/x-jquery-tmpl">
+      <div id="drop-target"></div>
+      <div class="upload-backdrop"></div>
+      <div id="drop-label">
+        <div>
+          <h1>Drop Images Anywhere!</h1>
+        </div>
+      </div>
+    </script>
+ 
+    <!-- Le styles --> 
+    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap-1.2.0.css">
+    <link rel="stylesheet" href="/stylesheets/master.css" type="text/css" media="screen" title="no title">
+    
+    <!-- Le splunk -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+    <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+    <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
+    <script type="text/javascript" src="/javascripts/date.format.js"></script>
+    <script type="text/javascript" src="/javascripts/underscore.js"></script>
+    <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
+    <script type="text/javascript" src="/javascripts/backbone.js"></script>
+    <script type="text/javascript" src="/javascripts/models.js"></script>
+    <script type="text/javascript" src="/javascripts/views.js"></script>
+ 
+    <!-- Le fav and touch icons --> 
+    <link rel="shortcut icon" href="images/favicon.ico"> 
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png"> 
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png"> 
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png"> 
+    
+    <script type="text/javascript">
+      $(document).ready(function() {        
+        var app = new PicshareApp();
+        Backbone.history.start();
+        
+        // Cancel drops in other places
+        $("body").bind('dragenter dragover', false).bind("drop", function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+        });
+      });
+    </script>
+    
+    <style>
+      body {
+        padding-top: 40px;
+        width: 100%;
+        height: 100%;
+      }
+      
+      div#album-header {
+        position: relative;
+      }
+      
+      .actions-wrapper {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      
+      .album-actions {
+        float: right;
+      }
+      
+      div#album-header h1 {
+        width: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        display: inline-block;
+      }
+      
+      .image {
+        float: left;
+        width: 20%;
+      }
+      
+      .full-size {
+        max-width: 520px;
+        max-height: 520px;
+        margin: 1px auto;
+        float: right;
+      }
+      
+      #droptarget {
+        margin-top: 20px;
+        width: 100%;
+        height: 100px;
+        border: 1px dashed;
+        vertical-align: middle;
+      }
+      
+      #droptarget h1 {
+        text-align: center;
+      }
+      
+      .drop-hover {
+        background: lightgray;
+      }
+      
+      ul#thumbs {
+        clear: both;
+        margin: 0;
+        padding: 0;
+      }
+      
+      ul#thumbs li {
+        float: left;
+        padding: 0px;
+        margin: 5px 3px 5px 0px;
+        list-style: none;
+        line-height: 0;
+      }
+      
+      a.thumb {
+        display: block;
+        padding: 2px;
+        border: 1px solid #CCC;
+      }
+      
+      a.thumb img {
+        width: 60px;
+        height: 60px;
+      }
+      
+      /*Fixes the positioning of the modal*/
+      .modal {
+         top: 0px;
+         margin-top: 100px;
+         z-index: 10002; /*Make the modal display over the toolbar*/
+         
+      }
+       /*From the 1.3 work in progress build*/
+      .modal-backdrop {
+       background-color: #000;
+       position: fixed;
+       top: 0;
+       left: 0;
+       right: 0;
+       bottom: 0;
+       z-index: 10001; /*Make the modal display over the toolbar*/
+      }
+      .modal-backdrop.fade {
+         opacity: 0;
+      }
+      .modal-backdrop, .modal-backdrop.fade.in {
+         filter: alpha(opacity=50);
+         -khtml-opacity: 0.5;
+         -moz-opacity: 0.5;
+         opacity: 0.5;
+      }
+      .hide {
+         display: none;
+      }
+      .fade {
+         -webkit-transition: opacity 0.15s linear;
+         -moz-transition: opacity 0.15s linear;
+         -ms-transition: opacity 0.15s linear;
+         -o-transition:
+         
+          opacity 0.15s linear;
+         transition: opacity 0.15s linear;
+         opacity: 0;
+      }
+      .fade.in {
+         opacity: 1;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      .upload-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10001; /*Make the modal display over the toolbar*/
+        overflow: visible;
+      }
+      
+       /*From the 1.3 work in progress build*/
+      .upload-backdrop {
+        background-color: #000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10002;
+        filter: alpha(opacity=50);
+        -khtml-opacity: 0.5;
+        -moz-opacity: 0.5;
+        opacity: 0.5;
+      }
+      
+      #drop-target {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 15000;
+      }
+    
+      #drop-label {
+        position: relative;
+        top: 160px;
+        left: auto;
+        bottom: auto;
+        right: auto;
+        z-index: 10003;
+        margin-top: 40px;
+        margin: 0 auto;
+        background: #FFF;
+        width: 360px;
+        height: 204px;
+        -webkit-border-radius: 6px;
+        -moz-border-radius: 6px;
+        border-radius: 6px;
+        -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        -webkit-background-clip: padding-box;
+        -moz-background-clip: padding-box;
+        background-clip: padding-box;
+      }
+      
+      #drop-label div {
+        -webkit-border-radius: 6px;
+        -moz-border-radius: 6px;
+        border-radius: 6px;
+        -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        -webkit-background-clip: padding-box;
+        -moz-background-clip: padding-box;
+        background-clip: padding-box;
+        border: dashed 2px black;
+        width: 356px;
+        height: 200px;
+      }
+      
+      #drop-label h1 {
+        text-align: center;
+        margin-top: 20%;
+      }
+    </style>
+  </head>
+  
+  <body>
+    
+    <div class="topbar" id="navbar"> 
+      <div class="fill"> 
+        <div class="container"> 
+          <h3><a href="#">Picshare</a></h3> 
+          <ul> 
+            <li class="active"><a href="">New</a></li> 
+          </ul> 
+        </div> 
+      </div> 
+    </div>
+    
+    <div id="content-container" class="container">      
+      <div class="hero-unit" id="hero">
+        <h1>Picshare - share with friends!</h1>
+        <p></p>
+        <p>
+          Ever been to a party and wanted to collect all the pictures you and 
+          your friends took in one place?
+        </p>
+        <p>
+          Picshare allows you to share and collaborate on albums with your friends. You and
+          your friends can all upload, comment and edit the album. At any point, you can
+          view the album online or download it (at the original resolution).
+        </p>
+        <p>
+          To start, simply drag some images onto the page.
+        </p>
+      </div>
+
+      <div class="row"></div>      
+      <div class="row">
+      <section id="album-container">
+      
+      </section>
+    </div>
+    
+    <div class="container" id="footer-container">
+      <footer> 
+        <p>&copy; Picshare 2011</p> 
+      </footer> 
+    </div>
+  </body>
+</html>
