@@ -33,7 +33,8 @@
 
     <script id="albumTemplate" type="text/x-jquery-tmpl">
       <div class="page-header" id="album-header">
-        <h1>${title}</h1>
+        <h1 id="album-title">${title}</h1>
+        <input id="album-title-input" class="xlarge" id="xlInput" name="xlInput" type="text">
         <div class="actions-wrapper">
           <div class="album-actions">
             {{each actions}}
@@ -131,9 +132,14 @@
     
     <style>
       body {
-        padding-top: 40px;
-        width: 100%;
-        height: 100%;
+        padding-top: 60px;
+      }
+      
+      .page-header input {
+        margin-bottom: 8px;
+        font-size: 30px;
+        line-height: 36px;
+        height: 36px;
       }
       
       .relative {
@@ -144,26 +150,56 @@
       
       div#album-header {
         position: relative;
+        margin-right: 20px;
+        background: #EDF6F8;
+        padding-top: 5px;
       }
       
       .actions-wrapper {
         position: absolute;
         bottom: 0;
-        left: 0;
-        width: 100%;
+        right: 0;
         margin-bottom: 8px;
       }
       
       .album-actions {
         float: right;
+        margin-right: 5px;
       }
       
       div#album-header h1 {
-        width: 100%;
+        margin-left: 5px;
+        width: 75%;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
         display: inline-block;
+      }
+      
+      div#album-header:hover h1 { 
+        outline: none;
+        border-color: rgba(82, 168, 236, 0.8);
+        -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+        -moz-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
+      }
+      
+      div#album-header.editing h1 {
+        display: none;
+      }
+      
+      div#album-header.editing input {
+        display: block;
+      }
+      
+      div#album-header input {
+        margin-left: 5px;
+        display: none;
+        width: 75%;
+        padding: 0px;
+        border: 0px;
+        font-weight: bold;
+        color: #404040;
       }
       
       .image {
@@ -426,12 +462,12 @@
           To start, simply drag some images onto the page.
         </p>
       </div>
-
-      <div class="row"></div>      
+     
       <div class="row">
-      <section id="album-container">
+        <section id="album-container">
       
-      </section>
+        </section>
+      </div>
     </div>
     
     <div class="container" id="footer-container">

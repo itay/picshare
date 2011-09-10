@@ -106,14 +106,17 @@
     initialize: function() {
       this.template = templates.album;
       
-      _.bindAll(this, "render", "thumbClicked", "saveAlbum", "shareAlbum", "deleteAlbum", "setAlbum");
+      _.bindAll(this, "render", "thumbClicked", "saveAlbum", 
+        "shareAlbum", "deleteAlbum", "setAlbum", "editAlbumTitle", "stopEditAlbumTitle");
     },
     
     events: {
       "click a.thumb": "thumbClicked",
       "click .album-actions a.save": "saveAlbum",
       "click .album-actions a.share": "shareAlbum",
-      "click .album-actions a.delete": "deleteAlbum"
+      "click .album-actions a.delete": "deleteAlbum",
+      "click #album-header h1": "editAlbumTitle",
+      "blur #album-header input": "stopEditAlbumTitle"
     },
     
     setAlbum: function(album) {
@@ -143,6 +146,26 @@
       }
     },
     
+    editAlbumTitle: function(e) {
+      e.preventDefault();
+      this.$("#album-title-input").val(this.$("#album-title").text());
+      this.$("#album-header").addClass("editing");
+      this.$("#album-title-input").focus();
+    },
+    
+    stopEditAlbumTitle: function(e) {
+      e.preventDefault();
+      this.$("#album-header").removeClass("editing");
+    
+      var newTitle = this.$("#album-title-input").val();
+      this.$("#album-title").text(newTitle);
+      this.album.set({name: newTitle});
+      
+      if (!this.album.isNew()) {
+        this.album.save();
+      }
+    },
+    
     saveAlbum: function(e) {
       var that = this;
       
@@ -169,13 +192,22 @@
       view.show();
     },
     
+    getActions: function() {
+      if (this.album.isNew()) {
+        return ["Save"];
+      }
+      else {
+        return ["Save", "Share", "Delete"]  
+      }
+    },
+    
     render: function() {
       $(this.el).empty();
       
       if (this.album) {
         $(this.el).html(this.template.tmpl({
           title: this.album.get("name"),
-          actions: ["Save", "Share", "Delete"]
+          actions: this.getActions()
         }));
         
         var thumbs = [];
@@ -433,7 +465,7 @@
     index: function() {
       this.hideAlbum();
       
-      App.album = new Album({name: "Album @ " + (new Date())});
+      App.album = new Album({name: "Untitled Album"});
       this.albumView.setAlbum(App.album);
       
       this.uploadView.render();
