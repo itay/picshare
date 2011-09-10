@@ -162,7 +162,7 @@
       this.album.set({name: newTitle});
       
       if (!this.album.isNew()) {
-        this.album.save();
+        this.album.save({name: newTitle});
       }
     },
     

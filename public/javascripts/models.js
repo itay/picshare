@@ -71,6 +71,13 @@
     },
     
     save: function(attrs, options) {
+      // In the case that we're saving just parts of the album,
+      // we short circuit
+      if (attrs) {
+        Backbone.Model.prototype.save.call(this, attrs, options);
+        return;
+      }
+      
       var that = this;
       options = options || {
         success: function() {},
@@ -86,7 +93,7 @@
         }
       }
       
-      Backbone.Model.prototype.save.call(this, {}, {
+      Backbone.Model.prototype.save.call(this, attrs, {
         success: function() {
           that.pictures.albumId = that.get("id");
           that.picturesMetadata.albumId = that.get("id");
