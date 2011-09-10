@@ -170,7 +170,7 @@
       var that = this;
       
       e.preventDefault();
-      this.album.save({}, {
+      this.album.save(null, {
         success: function() {
           var url = "album/" + that.album.get("id");
           App.navigate(url, true);
