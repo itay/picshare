@@ -56,6 +56,16 @@
         return currentInfo;
       },
       
+      deleteAlbum: function(albumId) {
+        if (!this.albums.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        
+        delete this.albums[albumId];
+        delete this.pictures[albumId];
+        delete this.metadata[albumId];
+      },
+      
       getAlbums: function() {
         return _.toArray(this.albums);
       },
@@ -82,6 +92,18 @@
         };
         
         return {id: pictureInfo.id};
+      },
+      
+      deletePicture: function(albumId, pictureId) {
+        if (!this.pictures.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        if (!this.pictures[albumId].hasOwnProperty(pictureId)) {
+          throw new Error("No such picture!");
+        }
+        
+        delete this.pictures[albumId][pictureId];
+        delete this.metadata[albumId][pictureId];
       },
       
       getPictures: function(albumId, isShallow) {
@@ -123,6 +145,17 @@
         this.metadata[albumId][pictureId] = currentInfo;
         
         return currentInfo;
+      },
+      
+      deletePictureMetadata: function(albumId, pictureId) {
+        if (!this.metadata.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
+          throw new Error("No such picture!");
+        }
+        
+        delete this.metadata[albumId][pictureId];
       },
       
       getPicturesMetadata: function(albumId) {

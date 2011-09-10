@@ -4,7 +4,8 @@
     thumb: $("#thumbTemplate"),
     fullImage: $("#fullImageTemplate"),
     album: $("#albumTemplate"),
-    deleteModal: $("#deleteModalTemplate"),
+    deleteAlbumModal: $("#deleteAlbumModalTemplate"),
+    deletePictureModal: $("#deletePictureModalTemplate"),
     upload: $("#uploadTemplate")
   };
   
@@ -33,10 +34,21 @@
     tagName: "li",
     
     initialize: function() {
-      _.bindAll(this, "render");
+      _.bindAll(this, "render", "deleteThumb");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
+      this.isEdit = this.options.isEdit;
+    },
+    
+    events: {
+      "click a.delete": "deleteThumb"
+    },
+    
+    deleteThumb: function(e) {
+      e.preventDefault();
+      var view = new DeletePictureModalView({template: templates.deletePictureModal, picture: this.picture});
+      view.show();
     },
     
     render: function() {
@@ -99,9 +111,9 @@
     
     events: {
       "click a.thumb": "thumbClicked",
-      "click a.save": "saveAlbum",
-      "click a.share": "shareAlbum",
-      "click a.delete": "deleteAlbum"
+      "click .album-actions a.save": "saveAlbum",
+      "click .album-actions a.share": "shareAlbum",
+      "click .album-actions a.delete": "deleteAlbum"
     },
     
     setAlbum: function(album) {
@@ -153,7 +165,7 @@
     
     deleteAlbum: function(e) {
       e.preventDefault();
-      var view = new DeleteModalView({template: templates.deleteModal});
+      var view = new DeleteAlbumModalView({template: templates.deleteAlbumModal});
       view.show();
     },
     
@@ -174,7 +186,7 @@
         
         this.$("#thumbs").append(thumbs);
         
-        if (!this.currentPicture) {
+        if (!this.currentPicture || !this.album.pictures.get(this.currentPicture.id)) {
           this.currentPicture = this.album.pictures.at(0);
         }
         
@@ -196,7 +208,7 @@
   BootstrapModalView = Backbone.View.extend({
     initialize: function() {
       this.template = this.options.template;
-      this.el = $(this.template.tmpl());
+      this.el = $(this.template.tmpl(this.options.templateContext));
       this.modal = this.el.modal({
         backdrop: true,
         modal: true,
@@ -236,13 +248,32 @@
     }
   });
   
-  DeleteModalView = BootstrapModalView.extend({
+  DeleteAlbumModalView = BootstrapModalView.extend({
     initialize: function() {
       BootstrapModalView.prototype.initialize.call(this);
     },
     
     primaryClicked: function(e) {
       e.preventDefault();
+      this.hide();
+    },
+    
+    secondaryClicked: function(e) {
+      e.preventDefault();
+      this.hide();
+    }
+  });
+  
+  DeletePictureModalView = BootstrapModalView.extend({
+    initialize: function() {
+      this.options.templateContext = this.options.picture.toJSON();
+      BootstrapModalView.prototype.initialize.call(this);
+    },
+    
+    primaryClicked: function(e) {
+      e.preventDefault();
+      
+      this.options.picture.destroy();
       this.hide();
     },
     
@@ -341,7 +372,7 @@
         }
       }
       
-      if (numReading > 0) {
+      if (numReading > 0 && App.album.isNew()) {
         App.navigate("new", true);
       }
     },

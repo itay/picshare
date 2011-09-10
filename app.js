@@ -67,6 +67,12 @@ app.put('/albums/:id', function(req, res) {
   res.json(data.updateAlbum(albumId, req.body));
 });
 
+app.del('/albums/:id', function(req, res) {
+  var albumId = req.params.id;
+  
+  res.json(data.deleteAlbum(albumId));
+});
+
 app.get('/albums/:id/pictures', function(req, res) {
   var albumId = req.params.id;
   var isShallow = req.query.isShallow;
@@ -80,6 +86,13 @@ app.post('/albums/:id/pictures', function(req, res) {
   res.json(data.createPicture(albumId, req.body));
 });
 
+app.del('/albums/:id/pictures/:pid', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  
+  res.json(data.deletePicture(albumId, pictureId));
+});
+
 app.get('/albums/:id/pictures/:pid', function(req, res) {
   var albumId = req.params.id;
   var pictureId = req.params.pid;
@@ -91,6 +104,13 @@ app.get('/albums/:id/metadata', function(req, res) {
   var albumId = req.params.id;
   
   res.json(data.getPicturesMetadata(albumId));
+});
+
+app.del('/albums/:id/pictures/:pid/metadata', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  
+  res.json(data.deletePictureMetadata(albumId, pictureId));
 });
 
 app.get('/albums/:id/pictures/:pid/metadata', function(req, res) {
