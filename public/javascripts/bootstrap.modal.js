@@ -101,29 +101,6 @@
 
       return this
     }
-  
-  , showBackdrop: function() {      
-      var that = this
-      var animate = "";
-        
-      if (this.$otherBackdrop) {
-        return;
-      }
-        
-      this.$otherBackdrop = $('<div class="modal-backdrop ' + animate + '" />')
-        .click(function () { })//.click(function () { that.close() }) //MC: for modal
-        .appendTo(document.body);
-    }
-  
-  , hideBackdrop: function() {      
-      var that = this
-      var animate = "";
-        
-      if (this.$otherBackdrop) {
-        this.$otherBackdrop.remove();
-        this.$otherBackdrop = null;
-      }
-    }
   }
 
 
