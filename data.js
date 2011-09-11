@@ -1,4 +1,3 @@
-
 (function() {
     var _ = require('underscore');
     var Class = require('./class').Class;
