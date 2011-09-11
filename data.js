@@ -104,7 +104,7 @@
         
         if (usingRedis) {
             var channel = "save:picture:"+albumId+":"+pictureInfo.id;
-            redisClient.publish(channel, JSON.stringify(pictureInfo);
+            redisClient.publish(channel, JSON.stringify(pictureInfo));
         }
 
         return {id: pictureInfo.id};
