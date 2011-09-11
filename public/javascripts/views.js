@@ -10,20 +10,88 @@
   };
   
   PictureView = Backbone.View.extend({
-    tagName: "img",
-    className: "full-size",
+    //tagName: "img",
+    //className: "pull-right",
+    className: "content",
     
     initialize: function() {
-      _.bindAll(this, "render");
+      _.bindAll(this, "render", "descriptionChange", "filenameChange", "titleChange");
       
+      this.template = templates.fullImage;
       this.picture = this.options.picture;
+    },
+    
+    events: {
+      "blur #picture-title": "titleChange",
+      "blur #picture-description": "descriptionChange",
+      "blur #picture-filename": "filenameChange"
+    },
+    
+    descriptionChange: function(e) {
+      e.preventDefault();
+    
+      var oldDescription = (this.picture.metadata.get("description") || "").trim();
+      var newDescription = ($(e.target).val() || "").trim();
+      if (newDescription === oldDescription) {
+        return;
+      }
+      
+      this.picture.metadata.set({description: newDescription});
+      if (!this.picture.metadata.isNew()) {
+        this.picture.metadata.save({description: newDescription});
+      }
+    },
+    
+    titleChange: function(e) {
+      e.preventDefault();
+    
+      var oldName = (this.picture.metadata.get("name") || "").trim();
+      var newName = ($(e.target).val() || "").trim();
+      if (newName === "" || newName === oldName) {
+        $(e.target).val(newName);
+        return;
+      }
+      
+      this.picture.metadata.set({name: newName});
+      if (!this.picture.metadata.isNew()) {
+        this.picture.metadata.save({name: newName});
+      }
+    },
+    
+    filenameChange: function(e) {
+      e.preventDefault();
+    
+      var oldFilename = (this.picture.metadata.get("filename") || "").trim();
+      var newFilename = ($(e.target).val() || "").trim();
+      if (newFilename === "" || newFilename === oldFilename) {
+        $(e.target).val(oldFilename);
+        return;
+      }
+      
+      this.picture.metadata.set({filename: newFilename});
+      if (!this.picture.metadata.isNew()) {
+        this.picture.metadata.save({filename: newFilename});
+      }
     },
     
     render: function() {
       $(this.el).empty();
       
       if (this.picture) {
-        $(this.el).attr("src", this.picture.get("data"));
+        var context = {
+          picture: this.picture.toJSON(),
+          metadata: this.picture.metadata.toJSON()
+        };
+        $(this.el).append(this.template.tmpl(context));
+        
+        // The plugin doesn't work right if the element 
+        // isn't in the actual DOM.
+        var that = this;
+        setTimeout(function() {
+          that.$("#picture-description").autoResize({
+            extraSpace: 0
+          });
+        }, 0);
       }
       
       return this;
@@ -60,43 +128,6 @@
       });
       
       $(this.el).html(content);
-      
-      return this;
-    }
-  });
-  
-  PictureMetadataView = Backbone.View.extend({
-    initialize: function() {
-      _.bindAll(this, "render");
-      
-      this.metadata = this.options.metadata;
-      this.metadata.bind("change", this.render);
-    },
-    
-    render: function() {
-      $(this.el).empty();
-      
-      $(this.el).text(this.metadata.get("name") + " @ " + this.metadata.get("modified"));
-      
-      return this;
-    }
-  });
-  
-  PictureWithMetadataView = Backbone.View.extend({
-    className: "image",
-    
-    initialize: function() {
-      _.bindAll(this, "render");
-      
-      this.pictureView = new PictureView({picture: this.options.picture});
-      this.metadataView = new PictureMetadataView({metadata: this.options.metadata});
-    },
-    
-    render: function() {
-      $(this.el).empty();
-      
-      $(this.el).append(this.pictureView.render().el);
-      $(this.el).append(this.metadataView.render().el);
       
       return this;
     }
@@ -174,7 +205,6 @@
     
     shareAlbum: function(e) {
       e.preventDefault();
-      console.log("share");
     },
     
     deleteAlbum: function(e) {
@@ -363,14 +393,13 @@
         fileReader.onloadend = function(e) {
           var imageData = e.target.result;
           var picture = new Picture({data: imageData, type: file.type});
-          var pictureMetadata = new PictureMetadata({
+          picture.metadata.set({
             name: file.name,
             type: file.type,
             size: file.size,
-            filename: file.fileName
+            filename: file.fileName,
+            description: ""
           });
-          picture.metadata = pictureMetadata;
-          metadata.picture = picture;
           
           album.addPicture(picture);
         };
@@ -427,12 +456,10 @@
       
       var that = this;
       $(document).bind("dragenter", function(e) {
-        console.log("a");
         e.preventDefault();
         that.uploadView.show();
       });
       $(document.body).bind("dragenter", function(e) {
-        console.log("b");
         e.preventDefault();
         that.uploadView.show();
       });

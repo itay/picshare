@@ -28,12 +28,35 @@
     </script>
 
     <script id="fullImageTemplate" type="text/x-jquery-tmpl">
-      <img src="${src}" class="full-image"/>
+      <div>
+        <input id="picture-title" class="xlarge transparent-input" type="text" value="${metadata.name}">
+      </div>
+      <img src="${picture.data}"/>
+      <div class="form-stacked">
+        <fieldset>
+          <div class="clearfix">
+            <label for="picture-filename">Filename</label>
+            <div class="input">
+              <input  class="xlarge transparent-input" id="picture-filename" 
+                      name="picture-description" type="text"
+                      value="${metadata.filename}">
+            </div>
+          </div>
+          <div class="clearfix">
+            <label for="picture-description">Description</label>
+            <div class="input">
+              <textarea  class="xlarge transparent-input" id="picture-description" 
+                      name="picture-description" type="text"
+                      placeholder="Enter a description for this image.">${metadata.description}</textarea>
+            </div>
+          </div>
+        </fieldset>
+      </div>
     </script>
 
     <script id="albumTemplate" type="text/x-jquery-tmpl">
       <div class="page-header" id="album-header">
-        <input id="album-title-input" class="xlarge transparent-input" id="xlInput" name="xlInput" type="text" value="${title}">
+        <input id="album-title-input" class="xlarge transparent-input" type="text" value="${title}">
         <div class="actions-wrapper">
           <div class="album-actions">
             {{each actions}}
@@ -43,11 +66,11 @@
         </div>
       </div>
       <div class="row clearfix">
-        <div class="span5 columns" id="thumbs-container">
+        <div class="span5" id="thumbs-container">
           <ul id="thumbs">
           </ul>
         </div>
-        <div class="span11 columns" id="full-size">
+        <div class="span11" id="full-size">
         </div>
       </div>
     </script>
@@ -103,6 +126,7 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.autoresize.js"></script>
     <script type="text/javascript" src="/javascripts/date.format.js"></script>
     <script type="text/javascript" src="/javascripts/underscore.js"></script>
     <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
@@ -132,6 +156,14 @@
     <style>
       body {
         padding-top: 60px;
+      }
+      
+      .pull-right {
+        float: right;
+      }
+      
+      .pull-left {
+        float: left;
       }
       
       .page-header input {
@@ -164,15 +196,6 @@
       .album-actions {
         float: right;
         margin-right: 5px;
-      }
-      
-      div#album-header h1 {
-        margin-left: 5px;
-        width: 75%;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        display: inline-block;
       }
       
       div#album-header:hover h1 { 
@@ -217,11 +240,48 @@
         width: 20%;
       }
       
-      .full-size {
+      #full-size div.content {
+        background: #EDF6F8;
+        padding: 5px;
+        margin-top: 5px;
+      }
+      
+      #full-size .form-stacked {
+        padding-left: 0px;
+      }
+      
+      #full-size textarea {
+        resize: none;
+        width: 100%;
+        max-width: 520px;
+        display: block;
+        padding-left: 0px;
+        overflow-y: hidden;
+      }
+      
+      #full-size input {
+        margin-bottom: 8px;
+        font-size: 18px;
+        line-height: 18px;
+        height: 18px;
+        padding: 4px 0px;
+        width: 100%;
+        max-width: 520px;
+      }
+      
+      #full-size input#picture-filename {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        font-weight: normal;
+        line-height: normal;
+        height: 13px;
+      }
+      
+      #full-size img {
         max-width: 520px;
         max-height: 520px;
+        display: block;
         margin: 1px auto;
-        float: right;
       }
       
       #droptarget {

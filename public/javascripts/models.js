@@ -8,7 +8,7 @@
   Backbone.sync = function(method, model, options) {
     //console.log("method: " + method);
     //console.log("model: ", model);
-    console.log(method + " URL: ", model.url());
+    //console.log(method + " URL: ", model.url());
     //console.log("options: ", options);
     
     //options.success.call(model);
@@ -16,13 +16,34 @@
   }
   
   Picture = Backbone.Model.extend({    
-    save: function() {
+    initialize: function() {
+      this.metadata = new PictureMetadata({id: this.get("id")});
+      this.metadata.picture = this;
+    },
+    
+    save: function(attr, options) {
       // We only save images if they are new
-      if (this.isNew()) {
-        Backbone.Model.prototype.save.apply(this, arguments);
-      }
+      var that = this;
+      options = options || {};
+      var success = options.success || function() {};
+      var error = options.success || function() {};
       
-      picture.metadata.save({"id": this.get("id")});
+      var newOptions = {
+        success: function() {
+          that.metadata.save({"id": this.get("id")}, options);
+        },
+        error: function() {
+          error.apply(that, arguments);
+        }
+      };
+      
+      
+      if (this.isNew()) {
+        Backbone.Model.prototype.save.call(this, attr, newOptions);
+      }
+      else {
+        this.metadata.save({"id": this.get("id")}, options);
+      }
     },
     
     url: function() {
@@ -35,13 +56,7 @@
       }
     },
     
-    fetch: function() {
-      // Create the metadata if necessary
-      if (!this.metadata) {
-        this.metadata = new PictureMetadata({id: this.get("id")});
-        this.metadata.picture = this;
-      }
-      
+    fetch: function() {      
       // Fetch the image and metadata
       this.metadata.fetch();
       Backbone.Model.prototype.fetch.apply(this, arguments);
