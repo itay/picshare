@@ -121,6 +121,44 @@ app.put('/albums/:id/pictures/:pid/metadata', function(req, res) {
   res.json(data.updatePictureMetadata(albumId, pictureId, req.body));
 });
 
+app.del('/albums/:id/pictures/:pid/comments/:cid', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  var commentId = req.params.cid;
+  
+  res.json(data.deletePictureComment(albumId, pictureId, commentId));
+});
+
+app.get('/albums/:id/pictures/:pid/comments/:cid', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  var commentId = req.params.cid;
+  
+  res.json(data.getPictureComment(albumId, pictureId, commentId));
+});
+
+app.get('/albums/:id/pictures/:pid/comments', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  
+  res.json(data.getPictureComments(albumId, pictureId));
+});
+
+app.post('/albums/:id/pictures/:pid/comments', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  
+  res.json(data.createPictureComment(albumId, pictureId, req.body));
+});
+
+app.put('/albums/:id/pictures/:pid/comments/:cid', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+  var commentId = req.params.cid;
+  
+  res.json(data.updatePictureComment(albumId, pictureId, commentId, req.body));
+});
+
 app.get('/dump', function(req, res) {
   res.json(data.getDump());
 });

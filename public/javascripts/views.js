@@ -6,7 +6,8 @@
     album: $("#albumTemplate"),
     deleteAlbumModal: $("#deleteAlbumModalTemplate"),
     deletePictureModal: $("#deletePictureModalTemplate"),
-    upload: $("#uploadTemplate")
+    upload: $("#uploadTemplate"),
+    comment: $("#commentTemplate")
   };
   
   PictureView = Backbone.View.extend({
@@ -80,9 +81,20 @@
       if (this.picture) {
         var context = {
           picture: this.picture.toJSON(),
-          metadata: this.picture.metadata.toJSON()
+          metadata: this.picture.metadata.toJSON(),
+          hasComments: this.picture.comments.length > 0
         };
         $(this.el).append(this.template.tmpl(context));
+
+        // Add comments
+        if (context.hasComments) {
+          var commentEls = [];
+          this.picture.comments.each(function(comment) {
+            var view = new CommentView({comment: comment});
+            commentEls.push(view.render().el);
+          });
+          this.$("#picture-comments").append(commentEls);
+        }
         
         // The plugin doesn't work right if the element 
         // isn't in the actual DOM.
@@ -93,6 +105,27 @@
           });
         }, 0);
       }
+      
+      return this;
+    }
+  });
+  
+  CommentView = Backbone.View.extend({
+    tagName: "div",
+    className: "picture-comment",
+    
+    initialize: function() {
+      this.template = templates.comment;
+      this.comment = this.options.comment;
+      _.bindAll(this, "render");
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      var context = this.comment.toJSON();
+      context.timeago = $.timeago(new Date(context.created));
+      $(this.el).append(this.template.tmpl(context));
       
       return this;
     }
@@ -138,7 +171,7 @@
       this.template = templates.album;
       
       _.bindAll(this, "render", "thumbClicked", "saveAlbum", 
-        "shareAlbum", "deleteAlbum", "setAlbum", "stopEditAlbumTitle");
+        "shareAlbum", "deleteAlbum", "setAlbum", "stopEditAlbumTitle", "newComment");
     },
     
     events: {
@@ -146,7 +179,28 @@
       "click .album-actions a.save": "saveAlbum",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
-      "blur #album-header input": "stopEditAlbumTitle"
+      "blur #album-header input": "stopEditAlbumTitle",
+      "submit #picture-comments-form": "newComment"
+    },
+    
+    newComment: function(e) {
+      e.preventDefault();
+      
+      var name = this.$("#picture-comment-name").val() || "Anonymous";
+      var text = this.$("#picture-comment-text").val() || "";
+      
+      if (text.trim() !== "") {
+        var comment = new PictureComment({
+          name: name.trim(),
+          text: text.trim(),
+          created: (new Date()).valueOf()
+        });
+        comment.picture = this.currentPicture;
+        this.currentPicture.comments.add(comment);
+        comment.save();
+        
+        this.render();
+      }
     },
     
     setAlbum: function(album) {

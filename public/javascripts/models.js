@@ -19,6 +19,9 @@
     initialize: function() {
       this.metadata = new PictureMetadata({id: this.get("id")});
       this.metadata.picture = this;
+      
+      this.comments = new PictureComments();
+      this.comments.picture = this;
     },
     
     save: function(attr, options) {
@@ -59,6 +62,7 @@
     fetch: function() {      
       // Fetch the image and metadata
       this.metadata.fetch();
+      this.comments.fetch();
       Backbone.Model.prototype.fetch.apply(this, arguments);
     }
   });
@@ -68,19 +72,43 @@
     },
     
     url: function() { 
-      var base = this.picture.collection.url();
-      return base + "/" + this.id + "/metadata";
+      var base = this.picture.url();
+      return base + "/metadata";
     }
   });
   
-  PictureComments = Backbone.Model.extend({
+  PictureComment = Backbone.Model.extend({
     initialize: function() {
       
     },
     
     url: function() { 
-      var base = this.picture.collection.url();
-      return base + "/" + this.id + "/comments";
+      var base = this.picture.url() + "/comments";
+      if (this.isNew()) {
+        return base;
+      }
+      else {
+        return base + "/" + this.id;
+      }
+    }
+  });
+  
+  PictureComments = Backbone.Collection.extend({
+    model: PictureComment,
+    
+    initialize: function() {
+      
+    },
+    
+    url: function() {
+      var base = this.picture.url();
+      return base + "/comments";
+    },
+    
+    save: function() {
+      this.each(function(comment) {
+        comment.save();
+      });
     }
   });
   

@@ -32,6 +32,7 @@
         this.albums = {};
         this.pictures = {};
         this.metadata = {}; 
+        this.comments = {};
       },
       
       createAlbum: function(albumInfo) {
@@ -41,6 +42,7 @@
         this.albums[albumInfo.id] = albumInfo;
         this.pictures[albumInfo.id] = {};
         this.metadata[albumInfo.id] = {};
+        this.comments[albumInfo.id] = {};
         
         return albumInfo;
       },
@@ -90,6 +92,7 @@
             id: pictureInfo.id,
             created: currentDate()  
         };
+        this.comments[albumId][pictureInfo.id] = {};
         
         return {id: pictureInfo.id};
       },
@@ -165,7 +168,77 @@
         if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
           throw new Error("No such picture!");
         }
+        
         return this.metadata[albumId][pictureId];
+      },
+      
+      createPictureComment: function(albumId, pictureId, commentInfo) {
+        var commentId = generateNextHash();
+        this.comments[albumId][pictureId][commentId] = {
+          id: commentId
+        };
+        
+        var currentInfo = this.comments[albumId][pictureId][commentId];
+        _.each(commentInfo, function(value, key) {
+            currentInfo[key] = value; 
+        });
+        currentInfo.created = currentDate();
+        currentInfo.modified = currentDate();
+        
+        this.comments[albumId][pictureId][commentId] = currentInfo;
+        
+        return currentInfo;
+      },
+      
+      updatePictureComment: function(albumId, pictureId, commentId, commentInfo) {
+        var currentInfo = this.comments[albumId][pictureId];
+        _.each(commentInfo, function(value, key) {
+            currentInfo[key] = value; 
+        });
+        currentInfo.modified = currentDate();
+        
+        this.comments[albumId][pictureId][commentId] = currentInfo;
+        
+        return currentInfo;
+      },
+      
+      deletePictureComment: function(albumId, pictureId, commentId) {
+        if (!this.comments.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        if (!this.comments[albumId].hasOwnProperty(pictureId)) {
+          throw new Error("No such picture!");
+        }
+        if (!this.comments[albumId][pictureId].hasOwnProperty(commentId)) {
+          throw new Error("No such comment!");
+        }
+        
+        delete this.comments[albumId][pictureId][commentId];
+      },
+      
+      getPictureComment: function(albumId, pictureId) {
+        if (!this.comments.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        if (!this.comments[albumId].hasOwnProperty(pictureId)) {
+          throw new Error("No such picture!");
+        }
+        if (!this.comments[albumId][pictureId].hasOwnProperty(commentId)) {
+          throw new Error("No such comment!");
+        }
+        
+        return this.comments[albumId][pictureId][commentId];
+      },
+      
+      getPictureComments: function(albumId, pictureId) {
+        if (!this.metadata.hasOwnProperty(albumId)) {
+          throw new Error("No such album!");
+        }
+        if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
+          throw new Error("No such picture!");
+        }
+        
+        return _.toArray(this.comments[albumId][pictureId]);
       },
       
       getDump: function() {  

@@ -27,12 +27,25 @@
       </div>
     </script>
 
+    <script id="commentTemplate" type="text/x-jquery-tmpl">
+      <div class="comment-header">
+        <div id="comment-header-name" class="inline"><strong>${name}</strong></div>
+        <div id="comment-header-time" class="inline pull-right">
+          <abbr class="timeago" title="${timeago}">${timeago}</abbr>
+        </div>
+      </div>
+      <div class="clearfix" style="display: block;"></div>
+      <div>
+        ${text}
+      </div>
+    </script>
+
     <script id="fullImageTemplate" type="text/x-jquery-tmpl">
       <div>
         <input id="picture-title" class="xlarge transparent-input" type="text" value="${metadata.name}">
       </div>
       <img src="${picture.data}"/>
-      <div class="form-stacked">
+      <div class="form-stacked" id="picture-info">
         <fieldset>
           <div class="clearfix">
             <label for="picture-filename">Filename</label>
@@ -51,6 +64,30 @@
             </div>
           </div>
         </fieldset>
+      </div>
+      <div id="picture-comments-container">
+        <h5>Comments</h5>
+        <form id="picture-comments-form" class="form-stacked">
+          <fieldset>
+            <div class="clearfix">
+              <div class="input">
+                <input class="large pull-left" id="picture-comment-name" name="picture-comment-name" type="text" placeholder="Enter your name">
+              </div>
+              <input type="submit" class="clearfix btn primary pull-right" value="Post Comment">
+            </div>
+            <div class="clearfix">
+              <div class="input">
+                <textarea class="xxlarge" id="picture-comment-text" 
+                          name="picture-comment-text" placeholder="Type your comment here"></textarea>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+        {{if hasComments }}
+        <div id="picture-comments">
+          
+        </div>
+        {{/if}}
       </div>
     </script>
 
@@ -126,6 +163,7 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.timeago.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.autoresize.js"></script>
     <script type="text/javascript" src="/javascripts/date.format.js"></script>
     <script type="text/javascript" src="/javascripts/underscore.js"></script>
@@ -141,7 +179,7 @@
     <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png"> 
     
     <script type="text/javascript">
-      $(document).ready(function() {        
+      $(document).ready(function() {   
         var app = new PicshareApp();
         Backbone.history.start();
         
@@ -156,6 +194,20 @@
     <style>
       body {
         padding-top: 60px;
+      }
+      
+      .comment-header {
+        background-image: url("http://mediacdn.disqus.com/1315541406/images/themes/narcissus/header-grey.png");
+        background-color: transparent;
+        -webkit-border-radius: 2px;
+        -moz-border-radius: 2px;
+        border-radius: 2px;
+        height: 100%;
+        padding: 10px;
+      }
+      
+      .inline {
+        display: inline;
       }
       
       .pull-right {
@@ -250,16 +302,17 @@
         padding-left: 0px;
       }
       
-      #full-size textarea {
+      #full-size textarea#picture-description {
         resize: none;
         width: 100%;
-        max-width: 520px;
+        /*max-width: 520px;*/
         display: block;
         padding-left: 0px;
+        padding-right: 0px;
         overflow-y: hidden;
       }
       
-      #full-size input {
+      #full-size input#picture-title {
         margin-bottom: 8px;
         font-size: 18px;
         line-height: 18px;
@@ -275,6 +328,19 @@
         font-weight: normal;
         line-height: normal;
         height: 13px;
+        padding-left: 0px;
+      }
+      
+      #full-size #picture-comments-container {
+        margin-top: -9px;
+      }
+      
+      #full-size textarea#picture-comment-text {
+        resize: none;
+        overflow-y: hidden;
+        width: 99%;
+        padding-left: 4px;
+        padding-right: 0px;
       }
       
       #full-size img {
@@ -282,6 +348,11 @@
         max-height: 520px;
         display: block;
         margin: 1px auto;
+      }
+      
+      .picture-comment {
+        margin-top: 20px;
+        margin-bottom: 5px;
       }
       
       #droptarget {
@@ -379,9 +450,9 @@
       
       /*Fixes the positioning of the modal*/
       .modal {
-         top: 0px;
-         margin-top: 100px;
-         z-index: 10002; /*Make the modal display over the toolbar*/
+        top: 0px;
+        margin-top: 100px;
+        z-index: 10002; /*Make the modal display over the toolbar*/
       }
        /*From the 1.3 work in progress build*/
       .modal-backdrop {
