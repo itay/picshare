@@ -2,7 +2,15 @@
 (function() {
     var _ = require('underscore');
     var Class = require('./class').Class;
-    
+    var redis;
+    var redisClient;
+    var usingRedis = false;
+
+    if (usingRedis) {
+        redis = require('redis');
+        redisClient = redis.createClient();
+    }
+
     var generateNextHash = (function() {
       var currentId = 100000;
       var idStep = 100000;
@@ -94,6 +102,11 @@
         };
         this.comments[albumId][pictureInfo.id] = {};
         
+        if (usingRedis) {
+            var channel = "save:picture:"+albumId+":"+pictureInfo.id;
+            redisClient.publish(channel, JSON.stringify(pictureInfo);
+        }
+
         return {id: pictureInfo.id};
       },
       
