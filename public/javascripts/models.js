@@ -33,6 +33,7 @@
       
       var newOptions = {
         success: function() {
+          that.comments.save();
           that.metadata.save({"id": that.get("id")}, options);
         },
         error: function() {
@@ -45,6 +46,7 @@
         Backbone.Model.prototype.save.call(this, attr, newOptions);
       }
       else {
+        this.comments.save();
         this.metadata.save({"id": this.get("id")}, options);
       }
     },
@@ -83,6 +85,7 @@
     },
     
     url: function() { 
+      console.log(this);
       var base = this.picture.url() + "/comments";
       if (this.isNew()) {
         return base;
@@ -108,6 +111,23 @@
     save: function() {
       this.each(function(comment) {
         comment.save();
+      });
+    },
+    
+    fetch: function(options) {
+      options = options || {};
+      options.success = options.success || function() {};
+      options.error = options.error || function() {};
+      
+      var that = this;
+      Backbone.Collection.prototype.fetch.call(this, {
+        success: function() {
+          that.each(function(comment) {
+            comment.picture = that.picture;
+            options.success.apply(that, arguments);
+          });
+        },
+        error: options.error
       });
     }
   });

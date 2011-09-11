@@ -196,8 +196,12 @@
           created: (new Date()).valueOf()
         });
         comment.picture = this.currentPicture;
+        console.log(comment);
         this.currentPicture.comments.add(comment);
-        comment.save();
+        
+        if (!this.currentPicture.isNew()) {
+          comment.save();
+        }
         
         this.render();
       }
@@ -293,7 +297,9 @@
         
         this.$("#thumbs").append(thumbs);
         
-        if (!this.currentPicture || !this.album.pictures.get(this.currentPicture.id)) {
+        if (!this.currentPicture 
+            || (!this.album.pictures.get(this.currentPicture.id) &&
+                !this.album.pictures.getByCid(this.currentPicture.cid))) {
           this.currentPicture = this.album.pictures.at(0);
         }
         

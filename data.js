@@ -191,7 +191,7 @@
       },
       
       updatePictureComment: function(albumId, pictureId, commentId, commentInfo) {
-        var currentInfo = this.comments[albumId][pictureId];
+        var currentInfo = this.comments[albumId][pictureId][commentId];
         _.each(commentInfo, function(value, key) {
             currentInfo[key] = value; 
         });
@@ -258,7 +258,8 @@
         return {
             albums: this.albums,
             pictures: modifiedPictures,
-            metadata: this.metadata
+            metadata: this.metadata,
+            comments: this.comments
         }
       }
     });
