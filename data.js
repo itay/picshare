@@ -158,13 +158,6 @@
         delete this.metadata[albumId][pictureId];
       },
       
-      getPicturesMetadata: function(albumId) {
-        if (!this.metadata.hasOwnProperty(albumId)) {
-          throw new Error("No such album!");
-        }
-        return _.toArray(this.metadata[albumId]);
-      },
-      
       getPictureMetadata: function(albumId, pictureId) {
         if (!this.metadata.hasOwnProperty(albumId)) {
           throw new Error("No such album!");

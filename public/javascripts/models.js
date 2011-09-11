@@ -30,7 +30,7 @@
       
       var newOptions = {
         success: function() {
-          that.metadata.save({"id": this.get("id")}, options);
+          that.metadata.save({"id": that.get("id")}, options);
         },
         error: function() {
           error.apply(that, arguments);
@@ -70,7 +70,18 @@
     url: function() { 
       var base = this.picture.collection.url();
       return base + "/" + this.id + "/metadata";
+    }
+  });
+  
+  PictureComments = Backbone.Model.extend({
+    initialize: function() {
+      
     },
+    
+    url: function() { 
+      var base = this.picture.collection.url();
+      return base + "/" + this.id + "/comments";
+    }
   });
   
   Album = Backbone.Model.extend({
@@ -122,7 +133,7 @@
         success: function() {
           that.pictures.albumId = that.get("id");
           
-          that.each(function(picture) {
+          that.pictures.each(function(picture) {
             picture.save({}, {
               success: function() {
                 done();

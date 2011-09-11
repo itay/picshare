@@ -100,12 +100,6 @@ app.get('/albums/:id/pictures/:pid', function(req, res) {
   res.json(data.getPicture(albumId, pictureId));
 });
 
-app.get('/albums/:id/metadata', function(req, res) {
-  var albumId = req.params.id;
-  
-  res.json(data.getPicturesMetadata(albumId));
-});
-
 app.del('/albums/:id/pictures/:pid/metadata', function(req, res) {
   var albumId = req.params.id;
   var pictureId = req.params.pid;
