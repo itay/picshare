@@ -6,3 +6,5 @@ tests/html/*
 *DS_Store
 *.sublime-*
 *.swp
+*.swo
+*~
