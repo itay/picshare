@@ -8,22 +8,6 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]--> 
 
-    <script id="thumbTemplate" type="text/x-jquery-tmpl">
-      <a href="" class="thumb">
-        <div class="thumb-container">
-        </div>
-      </a>
-      <div class="thumb-actions">
-        <div class="relative thumb-comments">
-          <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
-          <span>${numComments}</span>
-        </div>
-        <a href="" class="delete">
-          <img class="thumb-delete thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
-        </a>
-      </div>
-    </script>
-
     <script id="commentTemplate" type="text/x-jquery-tmpl">
       <div class="comment-header">
         <div id="comment-header-name" class="inline"><strong>${name}</strong></div>
@@ -73,21 +57,39 @@
       </fieldset>
     </script>
 
+    <script id="thumbTemplate" type="text/x-jquery-tmpl">
+      <a href="" class="thumb">
+        <div class="thumb-container">
+        </div>
+      </a>
+      <div class="thumb-actions">
+        <div class="relative thumb-comments">
+          <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
+          <span class="comment-count">${numComments}</span>
+        </div>
+        <a href="" class="delete">
+          <img class="thumb-delete thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
+        </a>
+      </div>
+    </script>
+    
+    <script id="actionsTemplate" type="text/x-jquery-tmpl">          
+      <div class="album-actions">
+        {{each actions}}
+        <a href="" class="${$value.toLowerCase()}">${$value}</a> {{if ($index + 1) !== actions.length}} | {{/if}} 
+        {{/each}}
+      </div>
+    </script>
+
     <script id="albumTemplate" type="text/x-jquery-tmpl">
       <div class="page-header" id="album-header">
         <input id="album-title-input" class="xlarge transparent-input" type="text" value="${title}">
         <div class="actions-wrapper">
-          <div class="album-actions">
-            {{each actions}}
-            <a href="" class="${$value.toLowerCase()}">${$value}</a> {{if ($index + 1) !== actions.length}} | {{/if}} 
-            {{/each}}
-          </div>
+
         </div>
       </div>
       <div class="row clearfix">
         <div class="span5" id="thumbs-container">
-          <ul id="thumbs">
-          </ul>
         </div>
         <div class="span11" id="full-size">
         </div>

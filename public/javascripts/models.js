@@ -223,25 +223,25 @@
     addPicture: function(picture) {
       this.pictures.add(picture, {silent: true});
       
-      this.trigger("add");
+      this.trigger("add", [picture]);
     },
     
     addPictures: function(pictures) {
       this.pictures.add(pictures, {silent: true});
       
-      this.trigger("add");
+      this.trigger("add", pictures);
     },
     
     add: function(picture) {
-      this.trigger("add", picture);
+      this.trigger("add", [picture]);
     },
     
     change: function() {
       this.trigger("change");
     },
     
-    remove: function() {
-      this.trigger("remove");
+    remove: function(picture) {
+      this.trigger("remove", picture);
     },
     
     reset: function() {
