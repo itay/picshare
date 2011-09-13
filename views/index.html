@@ -14,7 +14,8 @@
 
     <script id="thumbTemplate" type="text/x-jquery-tmpl">
       <a href="" class="thumb">
-        <img src="${src}" id="${id}"/>
+        <div class="thumb-container">
+        </div>
       </a>
       <div class="thumb-actions">
         <div class="relative thumb-comments">
@@ -44,7 +45,7 @@
       <div>
         <input id="picture-title" class="xlarge transparent-input" type="text" value="${metadata.name}">
       </div>
-      <img src="${picture.data}"/>
+      <div class="full-size-image"></div>
       <div class="form-stacked" id="picture-info">
         <fieldset>
           <div class="clearfix">
@@ -440,9 +441,16 @@
         margin-bottom: -2px;
       }
       
-      a.thumb img {
+      div.thumb-container {
+        display: block;
         width: 75px;
         height: 75px;
+        margin-bottom: 2px;
+      }
+      
+      a.thumb canvas {
+        display: block;
+        margin: 1px auto;
       }
       
       img.delete-thumb {

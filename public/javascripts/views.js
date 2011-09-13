@@ -9,11 +9,49 @@
     upload: $("#uploadTemplate"),
     comment: $("#commentTemplate")
   };
+  var createObjectURL = function (file) {
+      var undef = 'undefined',
+          urlAPI = (typeof window.createObjectURL !== undef && window) ||
+              (typeof URL !== undef && URL) ||
+              (typeof webkitURL !== undef && webkitURL);
+      return urlAPI ? urlAPI.createObjectURL(file) : false;
+  };
+  
+  var revokeObjectURL = function (url) {
+      var undef = 'undefined',
+          urlAPI = (typeof window.revokeObjectURL !== undef && window) ||
+              (typeof URL !== undef && URL) ||
+              (typeof webkitURL !== undef && webkitURL);
+      return urlAPI ? urlAPI.revokeObjectURL(url) : false;
+  };
+      
+  var scaleImage = function (img, options) {
+    options = options || {};
+    
+    var canvas = document.createElement('canvas'),
+        scale = Math.min(
+            (options.maxWidth || img.width) / img.width,
+            (options.maxHeight || img.height) / img.height
+        );
+    if (scale >= 1) {
+        scale = Math.max(
+            (options.minWidth || img.width) / img.width,
+            (options.minHeight || img.height) / img.height
+        );
+    }
+    img.width = parseInt(img.width * scale, 10);
+    img.height = parseInt(img.height * scale, 10);
+    
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+    return canvas;
+  };
   
   PictureView = Backbone.View.extend({
-    //tagName: "img",
-    //className: "pull-right",
     className: "content",
+    width: 520,
+    height: 520,
     
     initialize: function() {
       _.bindAll(this, "render", "descriptionChange", "filenameChange", "titleChange");
@@ -80,11 +118,24 @@
       
       if (this.picture) {
         var context = {
-          picture: this.picture.toJSON(),
+          //picture: this.picture.toJSON(),
           metadata: this.picture.metadata.toJSON(),
           hasComments: this.picture.comments.length > 0
         };
         $(this.el).append(this.template.tmpl(context));
+        
+        var that = this;
+        var url = createObjectURL(this.picture.file);
+        var img = $('<img>').bind('load', function () {
+            $(this).unbind('load');
+            revokeObjectURL(url);
+            var canvas = scaleImage(img[0], {
+              maxWidth: that.width,
+              maxHeight: that.height
+            });
+            that.$("div.full-size-image").append(canvas);
+        });
+        img.prop('src', url);
 
         // Add comments
         if (context.hasComments) {
@@ -133,6 +184,8 @@
   
   ThumbView = Backbone.View.extend({
     tagName: "li",
+    width: 75,
+    height: 75,
     
     initialize: function() {
       _.bindAll(this, "render", "deleteThumb");
@@ -160,7 +213,23 @@
         id: this.picture.get("id") || this.picture.cid
       });
       
+      var data = this.picture.get("data");
+      
       $(this.el).html(content);
+      
+      var that = this;
+      var url = createObjectURL(this.picture.file);
+      var img = $('<img>').bind('load', function () {
+          $(this).unbind('load');
+          revokeObjectURL(url);
+          var canvas = scaleImage(img[0], {
+            maxWidth: that.width,
+            maxHeight: that.height
+          });
+          $(canvas).attr('id', that.picture.get("id") || that.picture.cid);
+          that.$("div.thumb-container").append(canvas);
+      });
+      img.prop('src', url);
       
       return this;
     }
@@ -196,7 +265,6 @@
           created: (new Date()).valueOf()
         });
         comment.picture = this.currentPicture;
-        console.log(comment);
         this.currentPicture.comments.add(comment);
         
         if (!this.currentPicture.isNew()) {
@@ -303,7 +371,7 @@
           this.currentPicture = this.album.pictures.at(0);
         }
         
-        var pictureView = new PictureView({picture: this.currentPicture,});
+        var pictureView = new PictureView({picture: this.currentPicture});
         this.$("#full-size").append(pictureView.render().el);
         
         if (this.album.pictures.length) {
@@ -446,6 +514,8 @@
       
       // A tentative album
       var album = App.album;
+      var numReading = 0;
+      var pictures = [];
       
       // OK, we got some drop - time to do some work
       var readFile = function(file) {
@@ -460,8 +530,13 @@
             filename: file.fileName,
             description: ""
           });
+          picture.file = file;
           
-          album.addPicture(picture);
+          pictures.push(picture);
+                    
+          if (pictures.length === numReading) {
+            album.addPictures(pictures);
+          }
         };
         
         fileReader.onerror = function() {
@@ -471,7 +546,6 @@
         fileReader.readAsDataURL(file); 
       };
 
-      var numReading = 0;
       var files = e.originalEvent.dataTransfer.files;
       for(var i = 0; i < files.length; i++) {
         var file = e.originalEvent.dataTransfer.files[i];
