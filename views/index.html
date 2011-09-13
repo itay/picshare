@@ -8,10 +8,6 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]--> 
 
-    <script id="imageTemplate" type="text/x-jquery-tmpl">
-      <img src="${src}"/>
-    </script>
-
     <script id="thumbTemplate" type="text/x-jquery-tmpl">
       <a href="" class="thumb">
         <div class="thumb-container">
@@ -20,7 +16,7 @@
       <div class="thumb-actions">
         <div class="relative thumb-comments">
           <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
-          <span>0</span>
+          <span>${numComments}</span>
         </div>
         <a href="" class="delete">
           <img class="thumb-delete thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
@@ -40,56 +36,41 @@
         ${text}
       </div>
     </script>
-
-    <script id="fullImageTemplate" type="text/x-jquery-tmpl">
-      <div>
-        <input id="picture-title" class="xlarge transparent-input" type="text" value="${metadata.name}">
-      </div>
-      <div class="full-size-image"></div>
-      <div class="form-stacked" id="picture-info">
-        <fieldset>
-          <div class="clearfix">
-            <label for="picture-filename">Filename</label>
-            <div class="input">
-              <input  class="xlarge transparent-input" id="picture-filename" 
-                      name="picture-description" type="text"
-                      value="${metadata.filename}">
-            </div>
+    
+    <script id="newCommentFormTemplate" type="text/x-jquery-tmpl">
+      <fieldset>
+        <div class="clearfix">
+          <div class="input">
+            <input class="large pull-left" id="picture-comment-name" name="picture-comment-name" type="text" placeholder="Enter your name">
           </div>
-          <div class="clearfix">
-            <label for="picture-description">Description</label>
-            <div class="input">
-              <textarea  class="xlarge transparent-input" id="picture-description" 
-                      name="picture-description" type="text"
-                      placeholder="Enter a description for this image.">${metadata.description}</textarea>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-      <div id="picture-comments-container">
-        <h5>Comments</h5>
-        <form id="picture-comments-form" class="form-stacked">
-          <fieldset>
-            <div class="clearfix">
-              <div class="input">
-                <input class="large pull-left" id="picture-comment-name" name="picture-comment-name" type="text" placeholder="Enter your name">
-              </div>
-              <input type="submit" class="clearfix btn primary pull-right" value="Post Comment">
-            </div>
-            <div class="clearfix">
-              <div class="input">
-                <textarea class="xxlarge" id="picture-comment-text" 
-                          name="picture-comment-text" placeholder="Type your comment here"></textarea>
-              </div>
-            </div>
-          </fieldset>
-        </form>
-        {{if hasComments }}
-        <div id="picture-comments">
-          
+          <input type="submit" class="clearfix btn primary pull-right" value="Post Comment">
         </div>
-        {{/if}}
-      </div>
+        <div class="clearfix">
+          <div class="input">
+            <textarea class="xxlarge" id="picture-comment-text" 
+                      name="picture-comment-text" placeholder="Type your comment here"></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </script>
+    
+    <script id="commentsTemplate" type="text/x-jquery-tmpl">
+      <h5>Comments</h5>
+      <div id="picture-comments-form"></div>
+      <div id="picture-comments"></div>
+    </script>
+    
+    <script id="pictureInfoTemplate" type="text/x-jquery-tmpl">
+      <fieldset>
+        <div class="clearfix">
+          <label for="picture-description">Description</label>
+          <div class="input">
+            <textarea  class="xlarge transparent-input" id="picture-description" 
+                    name="picture-description" type="text"
+                    placeholder="Enter a description for this picture.">${description}</textarea>
+          </div>
+        </div>
+      </fieldset>
     </script>
 
     <script id="albumTemplate" type="text/x-jquery-tmpl">
@@ -615,11 +596,8 @@
         </p>
       </div>
      
-      <div class="row">
-        <section id="album-container">
-      
-        </section>
-      </div>
+      <section id="album-container">
+      </section>
     </div>
     
     <div class="container" id="footer-container">

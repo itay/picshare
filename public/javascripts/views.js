@@ -1,13 +1,16 @@
 (function() {
   var templates = {
-    picture: $("#imageTemplate"),
     thumb: $("#thumbTemplate"),
-    fullImage: $("#fullImageTemplate"),
     album: $("#albumTemplate"),
     deleteAlbumModal: $("#deleteAlbumModalTemplate"),
     deletePictureModal: $("#deletePictureModalTemplate"),
     upload: $("#uploadTemplate"),
-    comment: $("#commentTemplate")
+    newCommentForm: $("#newCommentFormTemplate"),
+    comment: $("#commentTemplate"),
+    comments: $("#commentsTemplate"),
+    pictureImage: $("#pictureImageTemplate"),
+    pictureInfo: $("#pictureInfoTemplate"),
+    pictureView: $("#pictureViewTemplate"),
   };
   var createObjectURL = function (file) {
       var undef = 'undefined',
@@ -48,119 +51,6 @@
     return canvas;
   };
   
-  PictureView = Backbone.View.extend({
-    className: "content",
-    width: 520,
-    height: 520,
-    
-    initialize: function() {
-      _.bindAll(this, "render", "descriptionChange", "filenameChange", "titleChange");
-      
-      this.template = templates.fullImage;
-      this.picture = this.options.picture;
-    },
-    
-    events: {
-      "blur #picture-title": "titleChange",
-      "blur #picture-description": "descriptionChange",
-      "blur #picture-filename": "filenameChange"
-    },
-    
-    descriptionChange: function(e) {
-      e.preventDefault();
-    
-      var oldDescription = (this.picture.metadata.get("description") || "").trim();
-      var newDescription = ($(e.target).val() || "").trim();
-      if (newDescription === oldDescription) {
-        return;
-      }
-      
-      this.picture.metadata.set({description: newDescription});
-      if (!this.picture.metadata.isNew()) {
-        this.picture.metadata.save({description: newDescription});
-      }
-    },
-    
-    titleChange: function(e) {
-      e.preventDefault();
-    
-      var oldName = (this.picture.metadata.get("name") || "").trim();
-      var newName = ($(e.target).val() || "").trim();
-      if (newName === "" || newName === oldName) {
-        $(e.target).val(newName);
-        return;
-      }
-      
-      this.picture.metadata.set({name: newName});
-      if (!this.picture.metadata.isNew()) {
-        this.picture.metadata.save({name: newName});
-      }
-    },
-    
-    filenameChange: function(e) {
-      e.preventDefault();
-    
-      var oldFilename = (this.picture.metadata.get("filename") || "").trim();
-      var newFilename = ($(e.target).val() || "").trim();
-      if (newFilename === "" || newFilename === oldFilename) {
-        $(e.target).val(oldFilename);
-        return;
-      }
-      
-      this.picture.metadata.set({filename: newFilename});
-      if (!this.picture.metadata.isNew()) {
-        this.picture.metadata.save({filename: newFilename});
-      }
-    },
-    
-    render: function() {
-      $(this.el).empty();
-      
-      if (this.picture) {
-        var context = {
-          //picture: this.picture.toJSON(),
-          metadata: this.picture.metadata.toJSON(),
-          hasComments: this.picture.comments.length > 0
-        };
-        $(this.el).append(this.template.tmpl(context));
-        
-        var that = this;
-        var url = createObjectURL(this.picture.file);
-        var img = $('<img>').bind('load', function () {
-            $(this).unbind('load');
-            revokeObjectURL(url);
-            var canvas = scaleImage(img[0], {
-              maxWidth: that.width,
-              maxHeight: that.height
-            });
-            that.$("div.full-size-image").append(canvas);
-        });
-        img.prop('src', url);
-
-        // Add comments
-        if (context.hasComments) {
-          var commentEls = [];
-          this.picture.comments.each(function(comment) {
-            var view = new CommentView({comment: comment});
-            commentEls.push(view.render().el);
-          });
-          this.$("#picture-comments").append(commentEls);
-        }
-        
-        // The plugin doesn't work right if the element 
-        // isn't in the actual DOM.
-        var that = this;
-        setTimeout(function() {
-          that.$("#picture-description").autoResize({
-            extraSpace: 0
-          });
-        }, 0);
-      }
-      
-      return this;
-    }
-  });
-  
   CommentView = Backbone.View.extend({
     tagName: "div",
     className: "picture-comment",
@@ -182,17 +72,283 @@
     }
   });
   
+  NewCommentFormView = Backbone.View.extend({
+    tagName: "form",
+    className: "form-stacked",
+    id: "picture-comments-form",
+    template: templates.newCommentForm,
+    
+    initialize: function() {
+      this.picture = this.options.picture;
+      _.bindAll(this, "render", "getFormData", "newComment");
+    },
+    
+    destroy: function() {
+      this.remove();
+    },
+    
+    events: {
+      "submit": "newComment"
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      $(this.el).html(this.template.tmpl());
+      
+      return this;
+    },
+    
+    newComment: function(e) {
+      e.preventDefault();
+      
+      var formData = this.getFormData();
+      
+      if (formData.text !== "") {
+        var comment = new PictureComment({
+          name: formData.name,
+          text: formData.text,
+          created: (new Date()).valueOf()
+        });
+        comment.picture = this.picture;
+        this.picture.comments.add(comment);
+        
+        if (!this.picture.isNew()) {
+          comment.save();
+        }
+      }
+    },
+    
+    getFormData: function() {
+      var name = this.$("#picture-comment-name").val() || "Anonymous";
+      var text = this.$("#picture-comment-text").val() || "";
+      
+      return {
+        name: name.trim(),
+        text: text.trim()
+      }
+    }
+  });
+  
+  var getStack = function() {
+    try {
+      throw new Error();
+    }
+    catch (err) {
+      console.log(err.stack);
+    }
+  };
+  
+  CommentsView = Backbone.View.extend({
+    tagName: "div",
+    id: "picture-comments-container",
+    template: templates.comments,
+    
+    initialize: function() {
+      this.picture = this.options.picture;
+      this.newCommentFormView = new NewCommentFormView({picture: this.picture});
+      
+      _.bindAll(this, "destroy", "render", "renderForm", "renderComments");
+      
+      this.picture.comments.bind("add", this.renderComments);
+      this.picture.comments.bind("change", this.renderComments);
+      this.picture.comments.bind("remove", this.renderComments);
+      this.picture.comments.bind("reset", this.renderComments);
+    },
+    
+    destroy: function() {
+      this.remove();
+      this.newCommentFormView.destroy();
+      this.picture.comments.unbind("add", this.renderComments);
+      this.picture.comments.unbind("change", this.renderComments);
+      this.picture.comments.unbind("remove", this.renderComments);
+      this.picture.comments.unbind("reset", this.renderComments);
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      $(this.el).html(this.template.tmpl());
+      
+      this.renderForm();
+      this.renderComments();
+      
+      return this;
+    },
+    
+    renderForm: function() {
+      this.$("#picture-comments-form").append(this.newCommentFormView.render().el);
+    },
+    
+    renderComments: function() {
+      var container = this.$("#picture-comments");
+      container.empty();
+      
+      var that = this;
+      var els = [];
+      this.picture.comments.each(function(comment) {
+        var view = new CommentView({comment: comment});
+        els.push(view.render().el);
+      });
+      
+      container.append(els);
+    }
+  });
+  
+  PictureImageView = Backbone.View.extend({
+    tagName: "div",
+    className: "full-size-image",
+    width: 520,
+    height: 520,
+    
+    initialize: function() {
+      this.picture = this.options.picture;
+      _.bindAll(this, "destroy", "render");
+      
+      // TODO: need to bind it to the picture proper,
+      // and see if the URL has been set yet.
+    },
+    
+    destroy: function() {
+      this.remove();
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      if (this.canvas) {
+        $(this.el).empty();
+        $(this.el).append(canvas);
+      }
+      else {
+        var that = this;
+        var url = (this.picture.file ? createObjectURL(this.picture.file) : this.picture.get("data"));
+        var img = $('<img>').bind('load', function () {
+          $(this).unbind('load');
+          revokeObjectURL(url);
+          
+          var canvas = scaleImage(img[0], {
+            maxWidth: that.width,
+            maxHeight: that.height
+          });
+          
+          that.canvas = canvas;
+          
+          $(that.el).empty();
+          $(that.el).append(canvas);
+        });
+        img.prop('src', url);
+      }
+      
+      return this;
+    }
+  });
+  
+  PictureInfoView = Backbone.View.extend({
+    tagName: "div",
+    className: "form-stacked",
+    id: "picture-info",
+    template: templates.pictureInfo,
+    
+    initialize: function() {
+      this.picture = this.options.picture;
+      
+      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription");
+      this.picture.metadata.bind("change", this.updateDescription);
+    },
+    
+    destroy: function() {
+      this.remove();
+      this.picture.metadata.unbind("change", this.updateDescription);
+    },
+    
+    events: {
+      "blur #picture-description": "descriptionChange",
+    },
+    
+    descriptionChange: function(e) {
+      e.preventDefault();
+    
+      var oldDescription = (this.picture.metadata.get("description") || "").trim();
+      var newDescription = ($(e.target).val() || "").trim();
+      if (newDescription === oldDescription) {
+        return;
+      }
+      
+      this.picture.metadata.set({description: newDescription});
+      if (!this.picture.metadata.isNew()) {
+        this.picture.metadata.save({description: newDescription});
+      }
+    },
+    
+    updateDescription: function() {
+      this.$("#picture-description").val(this.picture.metadata.get("description"));
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      $(this.el).html(this.template.tmpl(this.picture.metadata.toJSON()));
+      var that = this;
+      setTimeout(function() {
+        that.$("#picture-description").autoResize({
+          extraSpace: 0
+        });
+      }, 0);
+      
+      return this;
+    },
+  })
+  
+  PictureView = Backbone.View.extend({
+    tagName: "div",
+    className: "content",
+    
+    initialize: function() {
+      this.picture = this.options.picture;
+      this.pictureImageView = new PictureImageView({picture: this.picture});
+      this.commentsView = new CommentsView({picture: this.picture});
+      this.pictureInfoView = new PictureInfoView({picture: this.picture});
+      
+      _.bindAll(this, "destroy", "render");
+      
+    },
+    
+    destroy: function() {
+      this.remove();
+      this.pictureImageView.destroy();
+      this.commentsView.destroy();
+      this.pictureInfoView.destroy();
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      $(this.el).append([
+         this.pictureImageView.render().el,
+         this.pictureInfoView.render().el,
+         this.commentsView.render().el,
+      ]);
+   
+      return this;
+    }
+  });
+  
   ThumbView = Backbone.View.extend({
     tagName: "li",
     width: 75,
     height: 75,
     
     initialize: function() {
-      _.bindAll(this, "render", "deleteThumb");
+      _.bindAll(this, "destroy", "render", "deleteThumb");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
       this.isEdit = this.options.isEdit;
+    },
+    
+    destroy: function() {
+      this.remove();
     },
     
     events: {
@@ -210,6 +366,7 @@
       
       var content = this.template.tmpl({
         src: this.picture.get("data"),
+        numComments: this.picture.comments.length,
         id: this.picture.get("id") || this.picture.cid
       });
       
@@ -218,7 +375,7 @@
       $(this.el).html(content);
       
       var that = this;
-      var url = createObjectURL(this.picture.file);
+      var url = (this.picture.file ? createObjectURL(this.picture.file) : this.picture.get("data"));
       var img = $('<img>').bind('load', function () {
           $(this).unbind('load');
           revokeObjectURL(url);
@@ -236,11 +393,28 @@
   });
   
   AlbumView = Backbone.View.extend({    
+    tagName: "div",
+    className: "row",
+    
     initialize: function() {
       this.template = templates.album;
       
-      _.bindAll(this, "render", "thumbClicked", "saveAlbum", 
-        "shareAlbum", "deleteAlbum", "setAlbum", "stopEditAlbumTitle", "newComment");
+      _.bindAll(this, "destroy", "render", "thumbClicked", "saveAlbum", 
+        "shareAlbum", "deleteAlbum", "stopEditAlbumTitle");
+        
+      this.album = this.options.album;
+      this.album.bind("add", this.render);
+      this.album.bind("remove", this.render);
+      this.album.bind("change", this.render);
+      this.album.bind("reset", this.render);
+    },
+    
+    destroy: function() {
+      this.remove();
+      this.album.unbind("add", this.render);
+      this.album.unbind("remove", this.render);
+      this.album.unbind("change", this.render);
+      this.album.unbind("reset", this.render);
     },
     
     events: {
@@ -249,45 +423,6 @@
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "blur #album-header input": "stopEditAlbumTitle",
-      "submit #picture-comments-form": "newComment"
-    },
-    
-    newComment: function(e) {
-      e.preventDefault();
-      
-      var name = this.$("#picture-comment-name").val() || "Anonymous";
-      var text = this.$("#picture-comment-text").val() || "";
-      
-      if (text.trim() !== "") {
-        var comment = new PictureComment({
-          name: name.trim(),
-          text: text.trim(),
-          created: (new Date()).valueOf()
-        });
-        comment.picture = this.currentPicture;
-        this.currentPicture.comments.add(comment);
-        
-        if (!this.currentPicture.isNew()) {
-          comment.save();
-        }
-        
-        this.render();
-      }
-    },
-    
-    setAlbum: function(album) {
-      if (this.album) {
-        this.album.unbind("add", this.render);
-        this.album.unbind("remove", this.render);
-        this.album.unbind("change", this.render);
-        this.album.unbind("reset", this.render);
-      }
-      
-      this.album = album;
-      this.album.bind("add", this.render);
-      this.album.bind("remove", this.render);
-      this.album.bind("change", this.render);
-      this.album.bind("reset", this.render);
     },
     
     thumbClicked: function(e) {
@@ -350,11 +485,11 @@
     
     render: function() {
       $(this.el).empty();
-      
+            
       if (this.album) {
         $(this.el).html(this.template.tmpl({
-          title: this.album.get("name"),
-          actions: this.getActions()
+          actions: this.getActions(),
+          title: this.album.get("name")
         }));
         
         var thumbs = [];
@@ -371,8 +506,14 @@
           this.currentPicture = this.album.pictures.at(0);
         }
         
-        var pictureView = new PictureView({picture: this.currentPicture});
-        this.$("#full-size").append(pictureView.render().el);
+        if (this.currentPicture) {
+          if (this.pictureView) {
+            this.pictureView.destroy();
+          }
+          
+          this.pictureView = new PictureView({picture: this.currentPicture});
+          this.$("#full-size").append(this.pictureView.render().el);
+        }
         
         if (this.album.pictures.length) {
           $(this.el).removeClass("hidden");
@@ -582,11 +723,11 @@
       // Create global event registry
       this.events = _.extend({}, Backbone.Events);
       
-      _.bindAll(this, "index", "viewAlbum", "new", "hideHero", "showHero", "hideAlbum", "showAlbum");
+      _.bindAll(this, "index", "viewAlbum", "new", "hideHero", "showHero", 
+                "hideAlbum", "showAlbum", "createAlbumView", "renderAlbum");
       
       // Create views
       this.uploadView = new UploadView();
-      this.albumView = new AlbumView({el: "#album-container"});
       
       var that = this;
       $(document).bind("dragenter", function(e) {
@@ -612,15 +753,16 @@
         this.navigate("", true);
       }
       
+      this.albumView = this.createAlbumView();
+      
       this.uploadView.render();
-      this.albumView.render();
+      this.renderAlbum();
     },
     
     index: function() {
       this.hideAlbum();
       
       App.album = new Album({name: "Untitled Album"});
-      this.albumView.setAlbum(App.album);
       
       this.uploadView.render();
       this.showHero();
@@ -631,9 +773,10 @@
       
       var that = this;
       var go = function() {
-        that.albumView.setAlbum(App.album);
+        that.albumView = that.createAlbumView();
         that.uploadView.render();
-        that.albumView.render();
+        
+        that.renderAlbum();
       };
       
       // Don't re-render the page unless
@@ -649,6 +792,20 @@
       }
     },
     
+    createAlbumView: function() {
+      if (this.albumView) {
+        this.albumView.destroy();
+      }
+      
+      return new AlbumView({album: App.album});
+    },
+    
+    renderAlbum: function() {
+      //this.albumView = this.createAlbumView();
+      
+      $("#album-container").append(this.albumView.render().el);
+    },
+    
     showHero: function() {
       $("#hero").removeClass("hidden");
     },
@@ -658,11 +815,15 @@
     },
     
     showAlbum: function() {
-      $(this.albumView.el).removeClass("hidden");
+      if (this.albumView) {
+        $(this.albumView.el).removeClass("hidden");
+      }
     },
     
     hideAlbum: function() {
-      $(this.albumView.el).addClass("hidden");
+      if (this.albumView) {
+        $(this.albumView.el).addClass("hidden");
+      }
     }
   });
 })();

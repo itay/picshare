@@ -85,7 +85,6 @@
     },
     
     url: function() { 
-      console.log(this);
       var base = this.picture.url() + "/comments";
       if (this.isNew()) {
         return base;
