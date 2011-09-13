@@ -6,6 +6,7 @@
     var knox = require('knox');
     var canvas = require('canvas');
     redisClient = redis.createClient();
+    var sendingClient = redis.createClient();
     var knoxClient = knox.createClient({key:'AKIAIOPRNXFE5YO3VOWQ', 
                        secret:'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',
                        bucket:'apanda'});
@@ -46,6 +47,11 @@
         img.getContext('2d').drawImage(image, 0, 0, nwidth, nheight);
         return img;
     }
+    function sendMessageIfNecessary(channel, url, thumburl, normalurl) {
+        if (url && thumburl && normalurl) {
+            sendingClient.publish('done:' + channel, url + '^' + thumburl + '^' + normalurl);
+        }
+    }
 
     redisClient.on("pmessage", function(pattern, channel, message) {
         var obj = JSON.parse(message);
@@ -65,17 +71,23 @@
         }
         var stream = fs.createWriteStream(channel+extension);
         var contentLength = buffer.length;
+        var url=undefined,
+            thumburl = undefined,
+            normalurl = undefined;
         var req = knoxClient.put('/images/'+channel+'.jpg', {
                  'Content-Length': buffer.length,
                  'Content-Type':obj["type"]
         });
         req.on('response', function(res){
                    if (200 == res.statusCode) {
+                        url = req.url;
                         console.log('saved to %s', req.url);
                    }
                    else {
+                       url = '';
                        console.log('error %d', req.statusCode);
                    }
+                   sendMessageIfNecessary(channel, url, thumburl, normalurl);
               });
         req.end(buffer);
         thumb.toBuffer(function(err, buf) {
@@ -85,11 +97,14 @@
             });
             req.on('response', function(res){
                        if (200 == res.statusCode) {
+                            thumburl = req.url;
                             console.log('saved to %s', req.url);
                        }
                        else {
+                           thumburl = '';
                            console.log('error %d', req.statusCode);
                        }
+                       sendMessageIfNecessary(channel, url, thumburl, normalurl);
                   });
             req.end(buf);
         });
@@ -102,10 +117,13 @@
             req.on('response', function(res){
                        if (200 == res.statusCode) {
                             console.log('saved to %s', req.url);
+                            normalurl = req.url;
                        }
                        else {
                            console.log('error %d', req.statusCode);
+                           normalurl = '';
                        }
+                       sendMessageIfNecessary(channel, url, thumburl, normalurl);
                   });
             req.end(buf);
         });

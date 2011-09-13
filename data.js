@@ -4,10 +4,20 @@
     var redis;
     var redisClient;
     var usingRedis = false;
-
+    var receivingClient;
+    var callbackMap = {};
     if (usingRedis) {
         redis = require('redis');
         redisClient = redis.createClient();
+        receivingClient = redis.createClient();
+        receivingClient.on('pmessage', function(pattern, channel, message) {
+            var completed = channel.split(':').slice(1).join(':');
+            if (completed in callbackMap) {
+                completed.apply(null, message.split('^'));
+                delete callbackMap[completed];
+            }
+        });
+        receivingClient.psubscribe('done*');
     }
 
     var generateNextHash = (function() {
@@ -87,7 +97,9 @@
         return this.albums[albumId];
       },
       
-      createPicture: function(albumId, pictureInfo) {
+      // callback gets three parameters, in order:
+      // url, thumburl, normal size url
+      createPicture: function(albumId, pictureInfo, callback) {
         var albumInfo = this.albums[albumId];
         albumInfo.modified = currentDate();
         
@@ -103,6 +115,9 @@
         
         if (usingRedis) {
             var channel = "save:picture:"+albumId+":"+pictureInfo.id;
+            if (callback) {
+                callbackMap[channel] = callback;
+            }
             redisClient.publish(channel, JSON.stringify(pictureInfo));
         }
 
