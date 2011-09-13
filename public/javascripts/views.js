@@ -633,12 +633,24 @@
     
     renderCurrentPicture: function() {
       if (this.currentPicture) {
-        if (this.pictureView) {
-          this.pictureView.destroy();
+        // TODO: this caching is probably unnecessary, but we'll leave it in
+        // for now.
+        var oldPictureView = this.pictureView;
+        var pictureView = null;
+        if (this.currentPicture.fullView) {
+          pictureView = this.currentPicture.fullView;
+        }
+        else {
+          pictureView = new PictureView({picture: this.currentPicture});
+          pictureView.render();
         }
         
-        this.pictureView = new PictureView({picture: this.currentPicture});
-        this.$("#full-size").append(this.pictureView.render().el);
+        this.pictureView = this.currentPicture.fullView = pictureView;
+        this.$("#full-size").append(this.pictureView.el);
+        
+        if (oldPictureView) {
+          $(oldPictureView.el).detach();
+        }
       }
     },
     
@@ -937,9 +949,7 @@
       return new AlbumView({album: App.album});
     },
     
-    renderAlbum: function() {
-      //this.albumView = this.createAlbumView();
-      
+    renderAlbum: function() {      
       $("#album-container").append(this.albumView.render().el);
     },
     
