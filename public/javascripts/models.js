@@ -85,7 +85,6 @@
     },
     
     url: function() { 
-      console.log(this);
       var base = this.picture.url() + "/comments";
       if (this.isNew()) {
         return base;
@@ -134,7 +133,7 @@
   
   Album = Backbone.Model.extend({
     initialize: function(attrs, options) {
-      _.bindAll(this, "url", "save", "addPicture", "addPictures", "change", "reset", "remove", "add");
+      _.bindAll(this, "url", "save", "addPictures", "change", "reset", "remove", "add");
       
       options = options || {}
       this.pictures = options.pictures || new Pictures();
@@ -221,28 +220,25 @@
       });
     },
     
-    addPicture: function(picture) {
-      this.pictures.add(picture, {silent: true});
-      
-      this.trigger("add");
-    },
-    
     addPictures: function(pictures) {
       this.pictures.add(pictures, {silent: true});
       
-      this.trigger("add");
+      this.trigger("add", pictures);
+      
+      // Always save the album after we add new pictures
+      this.save();
     },
     
     add: function(picture) {
-      this.trigger("add", picture);
+      this.trigger("add", [picture]);
     },
     
     change: function() {
       this.trigger("change");
     },
     
-    remove: function() {
-      this.trigger("remove");
+    remove: function(picture) {
+      this.trigger("remove", picture);
     },
     
     reset: function() {
