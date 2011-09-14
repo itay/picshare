@@ -217,28 +217,38 @@
     render: function() {
       $(this.el).empty();
       
-      if (this.canvas) {
-        $(this.el).empty();
-        $(this.el).append(this.canvas);
+      var that = this;
+      var setImage = function(imageElement) {
+        $(that.el).empty();
+        $(that.el).append(imageElement);
+      };
+      
+      if (this.picture.get("full")) {
+        var img = $("<img>");
+        img.prop("src", this.picture.get("full"));
+        setImage(img);
       }
       else {
-        var that = this;
-        var url = (this.picture.file ? createObjectURL(this.picture.file) : this.picture.get("data"));
-        var img = $('<img>').bind('load', function () {
-          $(this).unbind('load');
-          revokeObjectURL(url);
-          
-          var canvas = scaleImage(img[0], {
-            maxWidth: that.width,
-            maxHeight: that.height
+        if (this.canvas) {
+          setImage(this.canvas);
+        }
+        else {
+          var url = (this.picture.file ? createObjectURL(this.picture.file) : this.picture.get("data"));
+          var img = $('<img>').bind('load', function () {
+            $(this).unbind('load');
+            revokeObjectURL(url);
+            
+            var canvas = scaleImage(img[0], {
+              maxWidth: that.width,
+              maxHeight: that.height
+            });
+            
+            that.canvas = canvas;
+            
+            setImage(canvas);
           });
-          
-          that.canvas = canvas;
-          
-          $(that.el).empty();
-          $(that.el).append(canvas);
-        });
-        img.prop('src', url);
+          img.prop('src', url);
+        }
       }
       
       return this;
@@ -389,26 +399,36 @@
       $(this.el).html(content);
       
       var that = this;
-      if (that.canvas) {
+      var setThumb = function(thumbElement) {
         that.$("div.thumb-container").empty();
-        that.$("div.thumb-container").append(that.canvas);
+        that.$("div.thumb-container").append(thumbElement);
+      }
+      
+      if (that.picture.get("thumb")) {
+        console.log("set thumb");
+        var img = $("<img>");
+        img.prop('src', that.picture.get("thumb"));
+        setThumb(img);
       }
       else {
-        var url = (that.picture.file ? createObjectURL(that.picture.file) : that.picture.get("data"));
-        var img = $('<img>').bind('load', function () {
-            $(this).unbind('load');
-            revokeObjectURL(url);
-            var canvas = scaleImage(img[0], {
-              maxWidth: that.width,
-              maxHeight: that.height
-            });
-            $(canvas).attr('id', that.picture.cid);
-            that.$("div.thumb-container").empty();
-            that.$("div.thumb-container").append(canvas);
-            
-            that.canvas = canvas;
-        });
-        img.prop('src', url);
+        if (that.canvas) {
+          setThumb(that.canvas);
+        }
+        else {
+          var url = (that.picture.file ? createObjectURL(that.picture.file) : that.picture.get("data"));
+          var img = $('<img>').bind('load', function () {
+              $(this).unbind('load');
+              revokeObjectURL(url);
+              var canvas = scaleImage(img[0], {
+                maxWidth: that.width,
+                maxHeight: that.height
+              });
+              $(canvas).attr('id', that.picture.cid);
+              setThumb(canvas);
+              that.canvas = canvas;
+          });
+          img.prop('src', url);
+        }
       }
       
       return this;
