@@ -3,21 +3,21 @@
     var Class = require('./class').Class;
     var redis;
     var redisClient;
-    var usingRedis = false;
+    var usingRedis = true;
     var receivingClient;
     var callbackMap = {};
     if (usingRedis) {
-        redis = require('redis');
-        redisClient = redis.createClient();
-        receivingClient = redis.createClient();
-        receivingClient.on('pmessage', function(pattern, channel, message) {
-            var completed = channel.split(':').slice(1).join(':');
-            if (completed in callbackMap) {
-                completed.apply(null, message.split('^'));
-                delete callbackMap[completed];
-            }
-        });
-        receivingClient.psubscribe('done*');
+      redis = require('redis');
+      redisClient = redis.createClient();
+      receivingClient = redis.createClient();
+      receivingClient.on('pmessage', function(pattern, channel, message) {
+        var completed = channel.split(':').slice(1).join(':');
+        if (completed in callbackMap) {
+          callbackMap[completed].apply(null, message.split('^'));
+          delete callbackMap[completed];
+        }
+      });
+      receivingClient.psubscribe('done*');
     }
 
     var generateNextHash = (function() {
@@ -113,15 +113,35 @@
         };
         this.comments[albumId][pictureInfo.id] = {};
         
-        if (usingRedis) {
-            var channel = "save:picture:"+albumId+":"+pictureInfo.id;
-            if (callback) {
-                callbackMap[channel] = callback;
-            }
-            redisClient.publish(channel, JSON.stringify(pictureInfo));
+        var that = this;
+        var start = new Date();
+        var whenResized = function(original, thumb, full) {
+          var end = new Date();
+          console.log("Resizing/storing took: " + (end-start));
+          var info = that.pictures[albumId][pictureInfo.id];
+          info.thumb = thumb;
+          info.full = full;
+          info.original = original;
+          
+          that.pictures[albumId][pictureInfo.id] = info;
+          callback({
+            id: pictureInfo.id, 
+            thumb: thumb, 
+            full: full,
+            original: original
+          });
         }
-
-        return {id: pictureInfo.id};
+        
+        if (usingRedis) {
+          var channel = "save:picture:"+albumId+":"+pictureInfo.id;
+          if (callback) {
+              callbackMap[channel] = whenResized;
+          }
+          redisClient.publish(channel, JSON.stringify(pictureInfo));
+        }
+        else {
+          callback({id: pictureInfo.id});
+        }
       },
       
       deletePicture: function(albumId, pictureId) {

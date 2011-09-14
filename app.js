@@ -83,7 +83,9 @@ app.get('/albums/:id/pictures', function(req, res) {
 app.post('/albums/:id/pictures', function(req, res) {
   var albumId = req.params.id;
 
-  res.json(data.createPicture(albumId, req.body));
+  data.createPicture(albumId, req.body, function(picture) {
+    res.json(picture);
+  });
 });
 
 app.del('/albums/:id/pictures/:pid', function(req, res) {
