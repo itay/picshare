@@ -499,7 +499,7 @@
     initialize: function() {
       this.template = templates.album;
       
-      _.bindAll(this, "destroy", "render", "thumbClicked", "saveAlbum", 
+      _.bindAll(this, "destroy", "render", "thumbClicked", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions",
         "renderCurrentPicture", "add", "reset", "del", "show", "hide");
         
@@ -524,7 +524,6 @@
     
     events: {
       "click a.thumb": "thumbClicked",
-      "click .album-actions a.save": "saveAlbum",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "blur #album-header input": "stopEditAlbumTitle",
@@ -577,21 +576,6 @@
       }
     },
     
-    saveAlbum: function(e) {
-      var that = this;
-      
-      e.preventDefault();
-      this.album.save(null, {
-        success: function() {
-          var url = "album/" + that.album.get("id");
-          App.navigate(url, true);
-        },
-        error: function() {
-          console.log("errr");
-        }
-      });
-    },
-    
     shareAlbum: function(e) {
       e.preventDefault();
     },
@@ -604,10 +588,10 @@
     
     getActions: function() {
       if (this.album.isNew()) {
-        return ["Save"];
+        return [];
       }
       else {
-        return ["Save", "Share", "Delete"]  
+        return ["Share", "Delete"]  
       }
     },
     
@@ -819,8 +803,7 @@
           });
           picture.file = file;
           
-          pictures.push(picture);
-                    
+          pictures.push(picture);      
           if (pictures.length === numReading) {
             album.addPictures(pictures);
           }
@@ -834,6 +817,7 @@
       };
 
       var files = e.originalEvent.dataTransfer.files;
+      var imageFiles = [];
       for(var i = 0; i < files.length; i++) {
         var file = e.originalEvent.dataTransfer.files[i];
         
@@ -843,12 +827,23 @@
         }
         else {
           numReading++;
-          readFile(file);
+          imageFiles.push(file);
         }
       }
       
-      if (numReading > 0 && App.album.isNew()) {
-        App.navigate("new", true);
+      if (imageFiles.length > 0 && album.isNew()) {
+        album.save({}, {
+          success: function() {
+            _.each(imageFiles, function(imageFile) {
+              readFile(imageFile);
+            });
+            
+            App.navigate(album.url(), true);
+          }
+        })
+      }
+      else {
+        _.each(imageFiles, function(imageFile) { readFile(imageFile); });
       }
     },
     
@@ -870,7 +865,7 @@
       this.events = _.extend({}, Backbone.Events);
       
       _.bindAll(this, "index", "viewAlbum", "new", "hideHero", "showHero", 
-                "hideAlbum", "showAlbum", "createAlbumView", "renderAlbum");
+                "hideAlbum", "showAlbum", "createAndRenderAlbum");
       
       // Create views
       this.uploadView = new UploadView();
@@ -888,27 +883,22 @@
     
     routes: {
       "": "index",
-      "new": "new",
-      "album/:aid": "viewAlbum"
+      "/": "index",
+      "/new": "new",
+      "/albums/:aid": "viewAlbum"
     },
     
     new: function() {
       this.hideHero();
       
-      if (!App.album) {
-        this.navigate("", true);
-      }
-      
-      this.albumView = this.createAlbumView();
-      
+      this.createAndRenderAlbum({name: "Untitled Album"});
       this.uploadView.render();
-      this.renderAlbum();
     },
     
     index: function() {
       this.hideAlbum();
-      
-      App.album = new Album({name: "Untitled Album"});
+            
+      this.createAndRenderAlbum({name: "Untitled Album"});
       
       this.uploadView.render();
       this.showHero();
@@ -917,39 +907,25 @@
     viewAlbum: function(aid) {
       this.hideHero();
       
-      var that = this;
-      var go = function() {
-        that.albumView = that.createAlbumView();
-        that.uploadView.render();
-        
-        that.renderAlbum();
-      };
-      
       // Don't re-render the page unless
       // we have to.
       if (App.album && App.album.get("id") === aid) {
-        that.uploadView.render();
+        this.uploadView.render();
       }
       else {
-        App.album = new Album({id: aid});
-        App.album.fetch({
-          success: function() {
-            that.albumView = that.createAlbumView();
-            that.renderAlbum();
-          }
-        });
+        this.uploadView.render();
+        this.createAndRenderAlbum({id: aid});
+        this.album.fetch();
       }
     },
     
-    createAlbumView: function() {
+    createAndRenderAlbum: function(options) {
       if (this.albumView) {
         this.albumView.destroy();
       }
       
-      return new AlbumView({album: App.album});
-    },
-    
-    renderAlbum: function() {      
+      this.album = new Album(options);
+      this.albumView = new AlbumView({album: this.album});
       $("#album-container").append(this.albumView.render().el);
     },
     

@@ -133,7 +133,7 @@
   
   Album = Backbone.Model.extend({
     initialize: function(attrs, options) {
-      _.bindAll(this, "url", "save", "addPicture", "addPictures", "change", "reset", "remove", "add");
+      _.bindAll(this, "url", "save", "addPictures", "change", "reset", "remove", "add");
       
       options = options || {}
       this.pictures = options.pictures || new Pictures();
@@ -220,16 +220,13 @@
       });
     },
     
-    addPicture: function(picture) {
-      this.pictures.add(picture, {silent: true});
-      
-      this.trigger("add", [picture]);
-    },
-    
     addPictures: function(pictures) {
       this.pictures.add(pictures, {silent: true});
       
       this.trigger("add", pictures);
+      
+      // Always save the album after we add new pictures
+      this.save();
     },
     
     add: function(picture) {
