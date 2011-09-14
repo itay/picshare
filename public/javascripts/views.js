@@ -405,7 +405,6 @@
       }
       
       if (that.picture.get("thumb")) {
-        console.log("set thumb");
         var img = $("<img>");
         img.prop('src', that.picture.get("thumb"));
         setThumb(img);
