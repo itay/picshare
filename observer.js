@@ -90,8 +90,9 @@
                    sendMessageIfNecessary(channel, url, thumburl, normalurl);
               });
         req.end(buffer);
+        var stream2 = fs.createWriteStream('thumb:'+channel+extension);
         thumb.toBuffer(function(err, buf) {
-            var req = knoxClient.put('/images/thumb:'+channel+'.jpg', {
+            var req = knoxClient.put('/images/thumb:'+channel+extension, {
                      'Content-Length': buf.length,
                      'Content-Type':obj["type"]
             });
@@ -107,10 +108,11 @@
                        sendMessageIfNecessary(channel, url, thumburl, normalurl);
                   });
             req.end(buf);
+            stream2.once('open', function(fd) {stream2.write(buf);});
         });
-
+        var stream3 = fs.createWriteStream('normal:'+channel+extension);
         normalSize.toBuffer(function(err, buf) {
-            var req = knoxClient.put('/images/normal:'+channel+'.jpg', {
+            var req = knoxClient.put('/images/normal:'+channel+extension, {
                      'Content-Length': buf.length,
                      'Content-Type':obj["type"]
             });
@@ -126,6 +128,7 @@
                        sendMessageIfNecessary(channel, url, thumburl, normalurl);
                   });
             req.end(buf);
+            stream3.once('open', function(fd) {stream3.write(buf);});
         });
 
         stream.once('open', function(fd) {
