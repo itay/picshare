@@ -13,8 +13,8 @@
     function generateThumb(image) {
         var width = image.width;
         var height = image.height;
-        var wratio = 80/width;
-        var hratio = 80/height;
+        var wratio = 90/width;
+        var hratio = 90/height;
         var nheight, nwidth;
         if (wratio > hratio) {
             nheight = Math.round(wratio * height);
@@ -32,8 +32,8 @@
     function generateNormalSizedImage(image) {
         var width = image.width;
         var height = image.height;
-        var wratio = 1024/width;
-        var hratio = 1024/height;
+        var wratio = 800/width;
+        var hratio = 600/height;
         var nheight, nwidth;
         if (wratio > hratio) {
             nheight = Math.round(hratio * height);
