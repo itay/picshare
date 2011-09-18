@@ -22,6 +22,23 @@
       
       this.comments = new PictureComments();
       this.comments.picture = this;
+      
+      _.bindAll(this, "setData");
+    },
+    
+    setData: function(file) {
+      var that = this;
+      if (this.isNew()) {
+        throw new Error("Cannot set picture data on an unsaved image");
+      }
+      
+      $('#file-upload').fileupload('send', {
+        files: [file], 
+        url: this.url() + "/data",
+        picture: this,
+      }).success(function(result, textStatus, jqxhr) {
+        that.set(result);
+      });
     },
     
     save: function(attr, options) {
@@ -33,6 +50,8 @@
       
       var newOptions = {
         success: function() {
+          that.setData(that.file, that.data);
+          
           that.comments.save();
           that.metadata.save({"id": that.get("id")}, options);
         },

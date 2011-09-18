@@ -351,13 +351,17 @@
     height: 75,
     
     initialize: function() {
-      _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount");
+      _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount",
+                      "uploadProgress", "uploadDone", "uploadFail");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
       this.isEdit = this.options.isEdit;
       
       this.picture.bind("change", this.render);
+      this.picture.bind("upload:progress", this.uploadProgress);
+      this.picture.bind("upload:done", this.uploadDone);
+      this.picture.bind("upload:fail", this.uploadFail);
       this.picture.comments.bind("add", this.updateCommentCount);
       this.picture.comments.bind("remove", this.updateCommentCount);
       this.picture.comments.bind("reset", this.updateCommentCount);
@@ -367,6 +371,9 @@
       this.remove();
       
       this.picture.unbind("change", this.render);
+      this.picture.unbind("upload:progress", this.uploadProgress);
+      this.picture.unbind("upload:done", this.uploadDone);
+      this.picture.unbind("upload:fail", this.uploadFail);
       this.picture.comments.unbind("add", this.updateCommentCount);
       this.picture.comments.unbind("remove", this.updateCommentCount);
       this.picture.comments.unbind("reset", this.updateCommentCount);
@@ -374,6 +381,18 @@
     
     events: {
       "click a.delete": "deleteThumb"
+    },
+    
+    uploadProgress: function(data) {
+      console.log("Picture " + this.picture.get("id") + ": " + (data.loaded / data.total));
+    },
+    
+    uploadDone: function(data) {
+      
+    },
+    
+    uploadFail: function(data) {
+      
     },
     
     deleteThumb: function(e) {
@@ -812,7 +831,8 @@
         var fileReader = new FileReader();
         fileReader.onloadend = function(e) {
           var imageData = e.target.result;
-          var picture = new Picture({data: imageData, type: file.type});
+          //var picture = new Picture({data: imageData, type: file.type});
+          var picture = new Picture({type: file.type});
           picture.metadata.set({
             name: file.name,
             type: file.type,
@@ -821,6 +841,7 @@
             description: ""
           });
           picture.file = file;
+          picture.data = imageData;
           
           pictures.push(picture);      
           if (pictures.length === numReading) {
@@ -897,6 +918,14 @@
       $(document.body).bind("dragenter", function(e) {
         e.preventDefault();
         that.uploadView.show();
+      });
+      
+      $("#file-upload").fileupload({
+        progress: function(e, data) {
+          var picture = data.picture;
+          picture.trigger("upload:progress", data);
+          console.log(picture.cid, data);
+        }
       });
     },
     

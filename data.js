@@ -1,5 +1,6 @@
 (function() {
     var _ = require('underscore');
+    var fs = require('fs');
     var Class = require('./class').Class;
     var redis;
     var redisClient;
@@ -133,14 +134,60 @@
         }
         
         if (usingRedis) {
-          var channel = "save:picture:"+albumId+":"+pictureInfo.id;
-          if (callback) {
-              callbackMap[channel] = whenResized;
+          if (pictureInfo.data) {
+            var channel = "save:picture:"+albumId+":"+pictureInfo.id;
+            if (callback) {
+                callbackMap[channel] = whenResized;
+            }
+            redisClient.publish(channel, JSON.stringify(pictureInfo));
           }
-          redisClient.publish(channel, JSON.stringify(pictureInfo));
+          else {
+            callback({id: pictureInfo.id});
+          }
         }
         else {
           callback({id: pictureInfo.id});
+        }
+      },
+      
+      setPictureData: function(albumId, pictureId, pictureInfo, callback) {
+        var that = this;
+        var start = new Date();
+        
+        var whenResized = function(original, thumb, full) {
+          var end = new Date();
+          console.log("Resizing/storing took: " + (end-start));
+          var info = that.pictures[albumId][pictureId];
+          info.thumb = thumb;
+          info.full = full;
+          info.original = original;
+          
+          that.pictures[albumId][pictureId] = info;
+          callback({
+            id: pictureId, 
+            thumb: thumb, 
+            full: full,
+            original: original
+          });
+        }
+        
+        if (usingRedis) {
+          var channel = "save:picture:"+albumId+":"+pictureId;
+          if (callback) {
+              callbackMap[channel] = whenResized;
+          }
+          
+          fs.readFile(pictureInfo.path, "base64", function(err, data) {
+            var info = {
+              data: "data:" + pictureInfo.type + ";base64," + data,
+              type: pictureInfo.type
+            };
+            
+            redisClient.publish(channel, JSON.stringify(info));    
+          });
+        }
+        else {
+          throw new Error("Cannot set picture data without redis");
         }
       },
       

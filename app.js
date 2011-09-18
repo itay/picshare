@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var form = require('connect-form');
 var _ = require('underscore');
 var Data = require('./data').Data;
 
@@ -27,6 +28,7 @@ app.configure(function(){
   });
   app.use(express.bodyParser());
   app.use(express.methodOverride());
+  app.use(form({keepExtensions: true}));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
@@ -85,6 +87,25 @@ app.post('/albums/:id/pictures', function(req, res) {
 
   data.createPicture(albumId, req.body, function(picture) {
     res.json(picture);
+  });
+});
+
+app.post('/albums/:id/pictures/:pid/data', function(req, res) {
+  var albumId = req.params.id;
+  var pictureId = req.params.pid;
+
+  /*data.setPictureData(albumId, pictureId, req.body, function(picture) {
+    res.json(picture);
+  });*/
+  req.form.complete(function(err, fields, files) {
+    if (err) {
+      next(err);
+    }
+    else {
+      data.setPictureData(albumId, pictureId, files["files[]"], function(picture) {
+        res.json(picture);
+      });
+    }
   });
 });
 
