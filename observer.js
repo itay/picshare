@@ -24,8 +24,8 @@
             nheight = Math.round(hratio * height);
             nwidth = Math.round(hratio * width);
         }
-        var thumb = new canvas(75, 75);
-        thumb.getContext('2d').drawImage(image, 0, 0, 75, 75);
+        var thumb = new canvas(90, 90);
+        thumb.getContext('2d').drawImage(image, 0, 0, 90, 90);
         return thumb;
     }
 
