@@ -37,7 +37,12 @@
         url: this.url() + "/data",
         picture: this,
       }).success(function(result, textStatus, jqxhr) {
+        console.log("success: " + that.cid);
         that.set(result);
+        that.trigger("upload:done");
+      }).error(function(jqxhr, textStatus, errorThrown) {
+        console.log("error: " + that.cid);
+        that.trigger("upload:fail", textStatus);
       });
     },
     
@@ -95,7 +100,7 @@
     url: function() { 
       var base = this.picture.url();
       return base + "/metadata";
-    }
+    },
   });
   
   PictureComment = Backbone.Model.extend({

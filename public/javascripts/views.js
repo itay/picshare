@@ -13,6 +13,7 @@
     pictureView: $("#pictureViewTemplate"),
     actions: $("#actionsTemplate")
   };
+  
   var createObjectURL = function (file) {
       var undef = 'undefined',
           urlAPI = (typeof window.createObjectURL !== undef && window) ||
@@ -228,28 +229,6 @@
         img.prop("src", this.picture.get("full"));
         setImage(img);
       }
-      else {
-        if (this.canvas) {
-          setImage(this.canvas);
-        }
-        else {
-          var url = (this.picture.file ? createObjectURL(this.picture.file) : this.picture.get("data"));
-          var img = $('<img>').bind('load', function () {
-            $(this).unbind('load');
-            revokeObjectURL(url);
-            
-            var canvas = scaleImage(img[0], {
-              maxWidth: that.width,
-              maxHeight: that.height
-            });
-            
-            that.canvas = canvas;
-            
-            setImage(canvas);
-          });
-          img.prop('src', url);
-        }
-      }
       
       return this;
     }
@@ -343,7 +322,7 @@
    
       return this;
     }
-  });
+  });  
   
   ThumbView = Backbone.View.extend({
     tagName: "li",
@@ -385,14 +364,21 @@
     
     uploadProgress: function(data) {
       console.log("Picture " + this.picture.get("id") + ": " + (data.loaded / data.total));
+      var percentage = (data.loaded / data.total) * 100;
+      var percentageText = parseInt(percentage, 10) + "%";
+      
+      this.$(".progress-bar").polartimer('drawTimer', percentage);
+      this.$(".progress-text").text(percentageText);
+      this.$(".progress").removeClass("hidden");
+      
     },
     
     uploadDone: function(data) {
-      
+      this.$(".progress").addClass("hidden");
     },
     
     uploadFail: function(data) {
-      
+      this.$(".progress").addClass("hidden");
     },
     
     deleteThumb: function(e) {
@@ -417,6 +403,8 @@
       
       $(this.el).html(content);
       
+      this.$(".progress-bar").polartimer();
+      
       var that = this;
       var setThumb = function(thumbElement) {
         that.$("div.thumb-container").empty();
@@ -426,27 +414,8 @@
       if (that.picture.get("thumb")) {
         var img = $("<img>");
         img.prop('src', that.picture.get("thumb"));
+        img.prop('id', that.picture.cid)
         setThumb(img);
-      }
-      else {
-        if (that.canvas) {
-          setThumb(that.canvas);
-        }
-        else {
-          var url = (that.picture.file ? createObjectURL(that.picture.file) : that.picture.get("data"));
-          var img = $('<img>').bind('load', function () {
-              $(this).unbind('load');
-              revokeObjectURL(url);
-              var canvas = scaleImage(img[0], {
-                maxWidth: that.width,
-                maxHeight: that.height
-              });
-              $(canvas).attr('id', that.picture.cid);
-              setThumb(canvas);
-              that.canvas = canvas;
-          });
-          img.prop('src', url);
-        }
       }
       
       return this;
@@ -831,7 +800,6 @@
         var fileReader = new FileReader();
         fileReader.onloadend = function(e) {
           var imageData = e.target.result;
-          //var picture = new Picture({data: imageData, type: file.type});
           var picture = new Picture({type: file.type});
           picture.metadata.set({
             name: file.name,
@@ -841,7 +809,6 @@
             description: ""
           });
           picture.file = file;
-          picture.data = imageData;
           
           pictures.push(picture);      
           if (pictures.length === numReading) {
@@ -924,7 +891,6 @@
         progress: function(e, data) {
           var picture = data.picture;
           picture.trigger("upload:progress", data);
-          console.log(picture.cid, data);
         }
       });
     },

@@ -94,9 +94,6 @@ app.post('/albums/:id/pictures/:pid/data', function(req, res) {
   var albumId = req.params.id;
   var pictureId = req.params.pid;
 
-  /*data.setPictureData(albumId, pictureId, req.body, function(picture) {
-    res.json(picture);
-  });*/
   req.form.complete(function(err, fields, files) {
     if (err) {
       next(err);

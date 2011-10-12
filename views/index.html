@@ -60,6 +60,10 @@
     <script id="thumbTemplate" type="text/x-jquery-tmpl">
       <a href="" class="thumb">
         <div class="thumb-container">
+          <div class="progress hidden">
+            <div class="progress-bar"></div>
+            <div class="progress-text"></div>
+          </div>
         </div>
       </a>
       <div class="thumb-actions">
@@ -147,9 +151,11 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/raphael/1.5.2/raphael-min.js"></script>
     <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.timeago.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.autoresize.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.polartimer.js"></script>
     <script type="text/javascript" src="/javascripts/date.format.js"></script>
     <script type="text/javascript" src="/javascripts/underscore.js"></script> 	
     <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
@@ -177,6 +183,18 @@
           e.stopPropagation();
           e.preventDefault();
         });
+        
+        // create the timer
+        /*$('#circle').polartimer({
+          timerSeconds: 6,
+          color: '#F00',
+          opacity: 0.7,
+          callback: function () {
+          }
+        });
+
+        // start the timer
+        $('#circle').polartimer('drawTimer', 33);*/
       });
     </script>
     
@@ -218,6 +236,19 @@
         position: relative;
         width: 100%;
         height: 100%;
+      }
+      
+      .progress {
+        width: 50px;
+        margin: 1px auto;
+      }
+      
+      .progress-bar {
+        width: 50px;
+      }
+      
+      .progress-text {
+        text-align: center;
       }
       
       div#album-header {
@@ -437,6 +468,11 @@
         width: 75px;
         height: 75px;
         margin-bottom: 2px;
+      }
+      
+      div.thumb-container img {
+        max-width: 75px;
+        max-height: 75px;
       }
       
       a.thumb canvas {
