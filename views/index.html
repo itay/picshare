@@ -58,14 +58,14 @@
     </script>
 
     <script id="thumbTemplate" type="text/x-jquery-tmpl">
-      <a href="" class="thumb">
+      <div href="" class="thumb">
         <div class="thumb-container">
           <div class="progress hidden">
             <div class="progress-bar"></div>
             <div class="progress-text"></div>
           </div>
         </div>
-      </a>
+      </div>
       <div class="thumb-actions">
         <div class="relative thumb-comments">
           <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
@@ -108,7 +108,7 @@
         </div>
         <div class="modal-body">
           <p>Are you sure you want to delete this picture?</p>
-          <img src="${data}" class="delete-thumb"/>
+          <img src="${thumb}" class="delete-thumb"/>
         </div>
         <div class="modal-footer clearfix">
           <a href="#" class="btn danger button1">Yes, make it go away!</a>
@@ -457,7 +457,7 @@
         background-position-y: -3px;
       }
       
-      a.thumb {
+      div.thumb {
         display: block;
         padding: 2px 2px 0px 2px;
         margin-bottom: -2px;
@@ -473,14 +473,15 @@
       div.thumb-container img {
         max-width: 75px;
         max-height: 75px;
+        cursor: pointer;
       }
       
-      a.thumb canvas {
+      div.thumb canvas {
         display: block;
         margin: 1px auto;
       }
       
-      a.thumb img {
+      div.thumb img {
         display: block;
         margin: 1px auto;
       }

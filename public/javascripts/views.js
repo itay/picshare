@@ -301,7 +301,7 @@
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount",
-                      "uploadProgress", "uploadDone", "uploadFail");
+                      "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
@@ -330,6 +330,7 @@
     },
     
     events: {
+      "click div.thumb-container img": "thumbClicked",
       "click a.delete": "deleteThumb"
     },
     
@@ -357,6 +358,11 @@
       view.show();
     },
     
+    thumbClicked: function(e) {
+      e.preventDefault();
+      App.events.trigger("thumb:clicked", this.picture);
+    },
+    
     updateCommentCount: function() {
       var numComments = this.picture.comments.length;
       this.$(".thumb-actions .comment-count").text(numComments);
@@ -374,15 +380,15 @@
       $(this.el).html(content);
       
       // Need to make this happen on the next tick, unfortunately.
+      var that = this;
       setTimeout(function() { 
-        this.$(".progress-bar").polartimer({
+        that.$(".progress-bar").polartimer({
           color: "#F00",
           opacity: 1.0,
         }); 
       }, 0);
       
       
-      var that = this;
       var setThumb = function(thumbElement) {
         that.$("div.thumb-container").empty();
         that.$("div.thumb-container").append(thumbElement);
@@ -484,7 +490,7 @@
     initialize: function() {
       this.template = templates.album;
       
-      _.bindAll(this, "destroy", "render", "thumbClicked", 
+      _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions",
         "renderCurrentPicture", "add", "reset", "del", "show", "hide");
         
@@ -495,6 +501,7 @@
       this.album.bind("add", this.add);
       this.album.bind("reset", this.reset);
       this.album.bind("remove", this.del);
+      App.events.bind("thumb:clicked", this.renderCurrentPicture);
     },
     
     destroy: function() {
@@ -505,24 +512,21 @@
       this.album.unbind("add", this.add);
       this.album.unbind("reset", this.reset);
       this.album.unbind("remove", this.del);
+      App.events.unbind("thumb:clicked", this.renderCurrentPicture);
     },
     
     events: {
-      "click a.thumb": "thumbClicked",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "blur #album-header input": "stopEditAlbumTitle",
     },
     
     add: function() {
-      this.currentPicture = this.album.pictures.at(this.album.pictures.length - 1);
-      this.renderCurrentPicture();
-      
       this.show();
     },
     
-    del: function() {
-      if (this.currentPicture && !this.album.pictures.getByCid(this.currentPicture.cid)) {
+    del: function(deletedPicture) {      
+      if (this.currentPicture === deletedPicture) {
         this.currentPicture = this.album.pictures.at(0);
         this.renderCurrentPicture();
       }
@@ -535,18 +539,6 @@
     reset: function() {
       this.currentPicture = this.album.pictures.at(0);
       this.render();
-    },
-    
-    thumbClicked: function(e) {
-      e.preventDefault();
-      
-      var pid = $(e.target).attr("id");
-      var picture = this.album.pictures.getByCid(pid);
-      
-      if (this.currentPicture !== picture) {
-        this.currentPicture = picture;
-        this.renderCurrentPicture();
-      }
     },
     
     stopEditAlbumTitle: function(e) {
@@ -600,7 +592,11 @@
       return this;
     },
     
-    renderCurrentPicture: function() {
+    renderCurrentPicture: function(picture) {
+      if (picture) {
+        this.currentPicture = picture;
+      }
+      
       if (this.currentPicture) {
         // TODO: this caching is probably unnecessary, but we'll leave it in
         // for now.
