@@ -14,45 +14,6 @@
     actions: $("#actionsTemplate")
   };
   
-  var createObjectURL = function (file) {
-      var undef = 'undefined',
-          urlAPI = (typeof window.createObjectURL !== undef && window) ||
-              (typeof URL !== undef && URL) ||
-              (typeof webkitURL !== undef && webkitURL);
-      return urlAPI ? urlAPI.createObjectURL(file) : false;
-  };
-  
-  var revokeObjectURL = function (url) {
-      var undef = 'undefined',
-          urlAPI = (typeof window.revokeObjectURL !== undef && window) ||
-              (typeof URL !== undef && URL) ||
-              (typeof webkitURL !== undef && webkitURL);
-      return urlAPI ? urlAPI.revokeObjectURL(url) : false;
-  };
-      
-  var scaleImage = function (img, options) {
-    options = options || {};
-    
-    var canvas = document.createElement('canvas'),
-        scale = Math.min(
-            (options.maxWidth || img.width) / img.width,
-            (options.maxHeight || img.height) / img.height
-        );
-    if (scale >= 1) {
-        scale = Math.max(
-            (options.minWidth || img.width) / img.width,
-            (options.minHeight || img.height) / img.height
-        );
-    }
-    img.width = parseInt(img.width * scale, 10);
-    img.height = parseInt(img.height * scale, 10);
-    
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
-    return canvas;
-  };
-  
   CommentView = Backbone.View.extend({
     tagName: "div",
     className: "picture-comment",
@@ -107,17 +68,29 @@
       var formData = this.getFormData();
       
       if (formData.text !== "") {
-        var comment = new PictureComment({
-          name: formData.name,
-          text: formData.text,
-          created: (new Date()).valueOf()
-        });
-        comment.picture = this.picture;
-        this.picture.comments.add(comment);
+        // Create the comment
+        var picture = picture;
+        var comment = new PictureComment(
+          {
+            name: formData.name,
+            text: formData.text,
+            created: (new Date()).valueOf()
+          },
+          {
+            picture: picture
+          }
+        );
         
-        if (!this.picture.isNew()) {
-          comment.save();
-        }
+        // Save it, and if the save is successful,
+        // add it to the comments collection
+        comment.save(null, {
+          success: function() {
+            picture.comments.add(comment);
+          },
+          error: function() {
+            console.log("Error saving comment...", comment, picture);
+          }
+        });
       }
     },
     
@@ -244,12 +217,12 @@
       this.picture = this.options.picture;
       
       _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription");
-      this.picture.metadata.bind("change", this.updateDescription);
+      this.picture.bind("change", this.updateDescription);
     },
     
     destroy: function() {
       this.remove();
-      this.picture.metadata.unbind("change", this.updateDescription);
+      this.picture.unbind("change", this.updateDescription);
     },
     
     events: {
@@ -259,26 +232,23 @@
     descriptionChange: function(e) {
       e.preventDefault();
     
-      var oldDescription = (this.picture.metadata.get("description") || "").trim();
+      var oldDescription = (this.picture.get("description") || "").trim();
       var newDescription = ($(e.target).val() || "").trim();
       if (newDescription === oldDescription) {
         return;
       }
-      
-      this.picture.metadata.set({description: newDescription});
-      if (!this.picture.metadata.isNew()) {
-        this.picture.metadata.save({description: newDescription});
-      }
+       
+      this.picture.save({description: newDescription});
     },
     
     updateDescription: function() {
-      this.$("#picture-description").val(this.picture.metadata.get("description"));
+      this.$("#picture-description").val(this.picture.get("description"));
     },
     
     render: function() {
       $(this.el).empty();
       
-      $(this.el).html(this.template.tmpl(this.picture.metadata.toJSON()));
+      $(this.el).html(this.template.tmpl(this.picture.toJSON()));
       var that = this;
       setTimeout(function() {
         that.$("#picture-description").autoResize({
@@ -344,6 +314,7 @@
       this.picture.comments.bind("add", this.updateCommentCount);
       this.picture.comments.bind("remove", this.updateCommentCount);
       this.picture.comments.bind("reset", this.updateCommentCount);
+      
     },
     
     destroy: function() {
@@ -370,7 +341,6 @@
       this.$(".progress-bar").polartimer('drawTimer', percentage);
       this.$(".progress-text").text(percentageText);
       this.$(".progress").removeClass("hidden");
-      
     },
     
     uploadDone: function(data) {
@@ -403,7 +373,14 @@
       
       $(this.el).html(content);
       
-      this.$(".progress-bar").polartimer();
+      // Need to make this happen on the next tick, unfortunately.
+      setTimeout(function() { 
+        this.$(".progress-bar").polartimer({
+          color: "#F00",
+          opacity: 1.0,
+        }); 
+      }, 0);
+      
       
       var that = this;
       var setThumb = function(thumbElement) {
@@ -435,7 +412,9 @@
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
-      this.album.bind("reset", this.render);
+      // You might think we need to bind to the reset event of the album,
+      // but in reality, that is going to cause the entire album to re-render,
+      // which will re-render us anyway.
       
       this.thumbViews = {};
     },
@@ -445,7 +424,6 @@
       
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
-      this.album.unbind("reset", this.render);
     },
     
     add: function(pictures) {
@@ -796,31 +774,31 @@
       var pictures = [];
       
       // OK, we got some drop - time to do some work
-      var readFile = function(file) {
-        var fileReader = new FileReader();
-        fileReader.onloadend = function(e) {
-          var imageData = e.target.result;
-          var picture = new Picture({type: file.type});
-          picture.metadata.set({
+      var handleFile = function(file) {
+        var picture = new Picture(
+          {
             name: file.name,
             type: file.type,
             size: file.size,
             filename: file.fileName,
             description: ""
-          });
-          picture.file = file;
-          
-          pictures.push(picture);      
-          if (pictures.length === numReading) {
-            album.addPictures(pictures);
+          },
+          {
+            album: album    
           }
-        };
+        );
         
-        fileReader.onerror = function() {
-          console.log("err: ", arguments);
-        };
-        
-        fileReader.readAsDataURL(file); 
+        picture.save(null, {
+          success: function() {
+            // OK, we've saved the data, now we can upload
+            // the actual file
+            album.pictures.add(picture);
+            picture.setData(file);
+          },
+          error: function() {
+            console.log("Picture save fail...", picture, album);
+          }
+        });
       };
 
       var files = e.originalEvent.dataTransfer.files;
@@ -841,16 +819,14 @@
       if (imageFiles.length > 0 && album.isNew()) {
         album.save({}, {
           success: function() {
-            _.each(imageFiles, function(imageFile) {
-              readFile(imageFile);
-            });
+            _.each(imageFiles, function(imageFile) { handleFile(imageFile); });
             
             App.navigate(album.url(), true);
           }
         })
       }
       else {
-        _.each(imageFiles, function(imageFile) { readFile(imageFile); });
+        _.each(imageFiles, function(imageFile) { handleFile(imageFile); });
       }
     },
     
