@@ -43,7 +43,7 @@
     
     initialize: function() {
       this.picture = this.options.picture;
-      _.bindAll(this, "render", "getFormData", "newComment");
+      _.bindAll(this, "render", "getFormData", "newComment", "clearForm");
     },
     
     destroy: function() {
@@ -65,11 +65,12 @@
     newComment: function(e) {
       e.preventDefault();
       
+      var that = this;
       var formData = this.getFormData();
       
       if (formData.text !== "") {
         // Create the comment
-        var picture = picture;
+        var picture = this.picture;
         var comment = new PictureComment(
           {
             name: formData.name,
@@ -86,6 +87,7 @@
         comment.save(null, {
           success: function() {
             picture.comments.add(comment);
+            that.clearForm();
           },
           error: function() {
             console.log("Error saving comment...", comment, picture);
@@ -102,6 +104,11 @@
         name: name.trim(),
         text: text.trim()
       }
+    },
+    
+    clearForm: function() {
+      this.$("#picture-comment-name").val("")
+      this.$("#picture-comment-text").val("")
     }
   });
   
@@ -263,6 +270,7 @@
   PictureView = Backbone.View.extend({
     tagName: "div",
     className: "content",
+    template: templates.pictureView,
     
     initialize: function() {
       this.picture = this.options.picture;
@@ -283,12 +291,17 @@
     
     render: function() {
       $(this.el).empty();
+      $(this.el).html(this.template.tmpl());
       
-      $(this.el).append([
+      this.$("#picture-image-container").append(this.pictureImageView.render().el);
+      this.$("#picture-comments-container").append(this.commentsView.render().el);
+      this.$("#picture-info-container").append(this.pictureInfoView.render().el);
+      
+      /*$(this.el).append([
          this.pictureImageView.render().el,
          this.pictureInfoView.render().el,
          this.commentsView.render().el,
-      ]);
+      ]);*/
    
       return this;
     }
@@ -485,7 +498,6 @@
   
   AlbumView = Backbone.View.extend({    
     tagName: "div",
-    className: "row",
     
     initialize: function() {
       this.template = templates.album;
@@ -518,7 +530,7 @@
     events: {
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
-      "blur #album-header input": "stopEditAlbumTitle",
+      "blur .album-header input": "stopEditAlbumTitle",
     },
     
     add: function() {
@@ -843,7 +855,7 @@
       // Create global event registry
       this.events = _.extend({}, Backbone.Events);
       
-      _.bindAll(this, "index", "viewAlbum", "new", "hideHero", "showHero", 
+      _.bindAll(this, "index", "viewAlbum", "new", 
                 "hideAlbum", "showAlbum", "createAndRenderAlbum");
       
       // Create views
@@ -874,25 +886,18 @@
       "/albums/:aid": "viewAlbum"
     },
     
-    new: function() {
-      this.hideHero();
-      
+    index: function() {
       this.createAndRenderAlbum({name: "Untitled Album"});
+      
       this.uploadView.render();
     },
     
-    index: function() {
-      this.hideAlbum();
-            
+    new: function() {
       this.createAndRenderAlbum({name: "Untitled Album"});
-      
       this.uploadView.render();
-      this.showHero();
     },
     
     viewAlbum: function(aid) {
-      this.hideHero();
-      
       // Don't re-render the page unless
       // we have to.
       if (App.album && App.album.get("id") === aid) {
@@ -913,14 +918,6 @@
       this.album = new Album(options);
       this.albumView = new AlbumView({album: this.album});
       $("#album-container").append(this.albumView.render().el);
-    },
-    
-    showHero: function() {
-      $("#hero").removeClass("hidden");
-    },
-    
-    hideHero: function() {
-      $("#hero").addClass("hidden");
     },
     
     showAlbum: function() {

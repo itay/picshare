@@ -44,6 +44,16 @@
       <div id="picture-comments"></div>
     </script>
     
+    <script id="pictureViewTemplate" type="text/x-jquery-tmpl">
+      <div class="row">
+        <div class="span16" id="picture-image-container"></div>
+      </div>
+      <div class="row" id="picture-extra">
+        <div class="span8" id="picture-comments-container"></div>
+        <div class="span7" id="picture-info-container"></div>
+      </div>
+    </script>
+        
     <script id="pictureInfoTemplate" type="text/x-jquery-tmpl">
       <fieldset>
         <div class="clearfix">
@@ -86,16 +96,21 @@
     </script>
 
     <script id="albumTemplate" type="text/x-jquery-tmpl">
-      <div class="page-header" id="album-header">
+      <div class="album-header">
         <input id="album-title-input" class="xlarge transparent-input" type="text" value="${title}">
         <div class="actions-wrapper">
-
+        
         </div>
       </div>
-      <div class="row clearfix">
-        <div class="span5" id="thumbs-container">
-        </div>
-        <div class="span11" id="full-size">
+      <div id="thumbs-container">
+      
+      </div>
+      <div class="container">
+        <div class="row">
+          <div class="row clearfix">
+            <div class="span16" id="full-size">
+            </div>
+          </div>
         </div>
       </div>
     </script>
@@ -144,7 +159,7 @@
     </script>
  
     <!-- Le styles --> 
-    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap-1.2.0.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap-1.3.0.css">
     <link rel="stylesheet" href="/stylesheets/master.css" type="text/css" media="screen" title="no title">
     
     <!-- Le splunk -->
@@ -183,24 +198,12 @@
           e.stopPropagation();
           e.preventDefault();
         });
-        
-        // create the timer
-        /*$('#circle').polartimer({
-          timerSeconds: 6,
-          color: '#F00',
-          opacity: 0.7,
-          callback: function () {
-          }
-        });
-
-        // start the timer
-        $('#circle').polartimer('drawTimer', 33);*/
       });
     </script>
     
     <style>
       body {
-        padding-top: 60px;
+        padding-top: 220px;
       }
       
       .comment-header {
@@ -225,7 +228,28 @@
         float: left;
       }
       
-      .page-header input {
+      .album-header {
+        position: fixed;
+        width: 100%;
+        top: 40px;
+        height: 45px;
+        left: auto;
+        right: auto;
+        background: #EDF6F8;
+        z-index: 1000;
+      }
+      
+      .album-header input {
+      }
+      
+      div.album-header input {
+        margin-left: 5px;
+        width: 50%;
+        padding: 0px;
+        border: 0px;
+        font-weight: bold;
+        color: #404040;
+        margin-top: 5px;
         margin-bottom: 8px;
         font-size: 30px;
         line-height: 36px;
@@ -251,13 +275,6 @@
         text-align: center;
       }
       
-      div#album-header {
-        position: relative;
-        margin-right: 20px;
-        background: #EDF6F8;
-        padding-top: 5px;
-      }
-      
       .actions-wrapper {
         position: absolute;
         bottom: 0;
@@ -268,14 +285,6 @@
       .album-actions {
         float: right;
         margin-right: 5px;
-      }
-      
-      div#album-header:hover h1 { 
-        outline: none;
-        border-color: rgba(82, 168, 236, 0.8);
-        -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
-        -moz-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 8px rgba(82, 168, 236, 0.6);
       }
       
       .transparent-input {
@@ -298,24 +307,15 @@
         background: whiteSmoke;
       }
       
-      div#album-header input {
-        margin-left: 5px;
-        width: 75%;
-        padding: 0px;
-        border: 0px;
-        font-weight: bold;
-        color: #404040;
-      }
-      
       .image {
         float: left;
         width: 20%;
       }
       
       .full-size-image {
-        min-height: 300px;
-        max-height: 520px;
-        max-width: 520px;
+        margin: 1px auto;
+        max-height: 614px;
+        max-width: 940px;
       }
       
       #full-size div.content {
@@ -331,34 +331,10 @@
       #full-size textarea#picture-description {
         resize: none;
         width: 100%;
-        /*max-width: 520px;*/
         display: block;
         padding-left: 0px;
         padding-right: 0px;
         overflow-y: hidden;
-      }
-      
-      #full-size input#picture-title {
-        margin-bottom: 8px;
-        font-size: 18px;
-        line-height: 18px;
-        height: 18px;
-        padding: 4px 0px;
-        width: 100%;
-        max-width: 520px;
-      }
-      
-      #full-size input#picture-filename {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        font-weight: normal;
-        line-height: normal;
-        height: 13px;
-        padding-left: 0px;
-      }
-      
-      #full-size #picture-comments-container {
-        margin-top: -9px;
       }
       
       #full-size textarea#picture-comment-text {
@@ -370,8 +346,6 @@
       }
       
       #full-size img {
-        max-width: 520px;
-        max-height: 520px;
         display: block;
         margin: 1px auto;
       }
@@ -397,19 +371,41 @@
         background: lightgray;
       }
       
+      #thumbs-container {
+        position: fixed;
+        width: 100%;
+        top: 80px;
+        height: 135px;
+        left: auto;
+        right: auto;
+        background: #EDF6F8;
+        z-index: 1000;
+        overflow-x: scroll;
+        overflow-y: hidden;
+      }
+      
       ul#thumbs {
         clear: both;
         margin: 0;
         padding: 0;
+        white-space: nowrap;
+        list-style: none;
+        display: block;
+        margin-left: 5px;
+        margin-right: 5px;
+        max-width: 100000%;
+        width: 10000%;
       }
       
       ul#thumbs li {
+        display: inline;
         float: left;
         padding: 0px;
         margin: 5px 3px 5px 0px;
         list-style: none;
         background: #EDF6F8;
         border: 1px solid #D6EAEE;
+        width: 81px;
       }
       
       .thumb-sprite {
@@ -621,7 +617,7 @@
     
     <div class="topbar" id="navbar"> 
       <div class="fill"> 
-        <div class="container"> 
+        <div class="container-fluid"> 
           <h3><a href="#">Picshare</a></h3> 
           <ul> 
             <li class="active"><a href="">New</a></li> 
@@ -630,30 +626,11 @@
       </div> 
     </div>
     
-    <div id="content-container" class="container">      
-      <div class="hero-unit" id="hero">
-        <h1>Picshare - share with friends!</h1>
-        <p></p>
-        <p>
-          Ever been to a party and wanted to collect all the pictures you and 
-          your friends took in one place?
-        </p>
-        <p>
-          Picshare allows you to share and collaborate on albums with your friends. You and
-          your friends can all upload, comment and edit the album. At any point, you can
-          view the album online or download it (at the original resolution).
-        </p>
-        <p>
-          To start, simply drag some images onto the page.
-        </p>
-      </div>
-     
-      <section id="album-container">
-      </section>
-      
-      <div id="file-upload">
-        <!--<input id="fileupload" type="file" name="files[]" multiple>-->
-      </div>
+    <div id="album-container">      
+    </div>
+    
+    <div id="file-upload">
+      <!--<input id="fileupload" type="file" name="files[]" multiple>-->
     </div>
     
     <div class="container" id="footer-container">
