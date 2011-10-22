@@ -156,6 +156,12 @@
     },
     
     reset: function() {
+      // Every time the pictures collection is reset, we have
+      // to go and fetch the comments for those pictures
+      this.pictures.each(function(picture) {
+        picture.comments.fetch();
+      });
+      
       this.trigger("reset");
     },
     

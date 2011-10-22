@@ -49,7 +49,6 @@
       init: function() {
         this.albums = {};
         this.pictures = {};
-        this.metadata = {}; 
         this.comments = {};
       },
       
@@ -59,7 +58,6 @@
         
         this.albums[albumInfo.id] = albumInfo;
         this.pictures[albumInfo.id] = {};
-        this.metadata[albumInfo.id] = {};
         this.comments[albumInfo.id] = {};
         
         return albumInfo;
@@ -83,7 +81,6 @@
         
         delete this.albums[albumId];
         delete this.pictures[albumId];
-        delete this.metadata[albumId];
       },
       
       getAlbums: function() {
@@ -108,48 +105,27 @@
         pictureInfo.created = currentDate();
         
         this.pictures[albumId][pictureInfo.id] = pictureInfo;
-        this.metadata[albumId][pictureInfo.id] = {
-            id: pictureInfo.id,
-            created: currentDate()  
-        };
         this.comments[albumId][pictureInfo.id] = {};
         
         var that = this;
         var start = new Date();
-        var whenResized = function(original, thumb, full) {
-          var end = new Date();
-          console.log("Resizing/storing took: " + (end-start));
-          var info = that.pictures[albumId][pictureInfo.id];
-          info.thumb = thumb;
-          info.full = full;
-          info.original = original;
-          
-          that.pictures[albumId][pictureInfo.id] = info;
-          callback({
-            id: pictureInfo.id, 
-            thumb: thumb, 
-            full: full,
-            original: original
-          });
-        }
-        
-        if (usingRedis) {
-          if (pictureInfo.data) {
-            var channel = "save:picture:"+albumId+":"+pictureInfo.id;
-            if (callback) {
-                callbackMap[channel] = whenResized;
-            }
-            redisClient.publish(channel, JSON.stringify(pictureInfo));
-          }
-          else {
-            callback({id: pictureInfo.id});
-          }
-        }
-        else {
-          callback({id: pictureInfo.id});
-        }
+        callback({id: pictureInfo.id});
       },
       
+      updatePicture: function(albumId, pictureId, pictureInfo) {
+        var currentInfo = this.pictures[albumId][pictureId];
+        _.each(pictureInfo, function(value, key) {
+            currentInfo[key] = value; 
+        });
+        currentInfo.modified = currentDate();
+        
+        this.pictures[albumId][pictureId] = currentInfo;
+        
+        return currentInfo;
+      },
+      
+      // callback gets three parameters, in order:
+      // url, thumburl, normal size url
       setPictureData: function(albumId, pictureId, pictureInfo, callback) {
         var that = this;
         var start = new Date();
@@ -200,7 +176,6 @@
         }
         
         delete this.pictures[albumId][pictureId];
-        delete this.metadata[albumId][pictureId];
       },
       
       getPictures: function(albumId, isShallow) {
@@ -230,40 +205,6 @@
         }
         
         return this.pictures[albumId][pictureId];
-      },
-      
-      updatePictureMetadata: function(albumId, pictureId, metadataInfo) {
-        var currentInfo = this.metadata[albumId][pictureId];
-        _.each(metadataInfo, function(value, key) {
-            currentInfo[key] = value; 
-        });
-        currentInfo.modified = currentDate();
-        
-        this.metadata[albumId][pictureId] = currentInfo;
-        
-        return currentInfo;
-      },
-      
-      deletePictureMetadata: function(albumId, pictureId) {
-        if (!this.metadata.hasOwnProperty(albumId)) {
-          throw new Error("No such album!");
-        }
-        if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
-          throw new Error("No such picture!");
-        }
-        
-        delete this.metadata[albumId][pictureId];
-      },
-      
-      getPictureMetadata: function(albumId, pictureId) {
-        if (!this.metadata.hasOwnProperty(albumId)) {
-          throw new Error("No such album!");
-        }
-        if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
-          throw new Error("No such picture!");
-        }
-        
-        return this.metadata[albumId][pictureId];
       },
       
       createPictureComment: function(albumId, pictureId, commentInfo) {
@@ -325,10 +266,10 @@
       },
       
       getPictureComments: function(albumId, pictureId) {
-        if (!this.metadata.hasOwnProperty(albumId)) {
+        if (!this.comments.hasOwnProperty(albumId)) {
           throw new Error("No such album!");
         }
-        if (!this.metadata[albumId].hasOwnProperty(pictureId)) {
+        if (!this.comments[albumId].hasOwnProperty(pictureId)) {
           throw new Error("No such picture!");
         }
         
@@ -336,23 +277,9 @@
       },
       
       getDump: function() {  
-        var modifiedPictures = {};
-        _.each(this.pictures, function(album, albumId) {
-          modifiedPictures[albumId] = {};
-          _.each(album, function(picture, pictureId) {
-            modifiedPictures[albumId][pictureId] = {};
-            _.each(picture, function(value, key) {
-              if (key !== "data") {
-                modifiedPictures[albumId][pictureId][key] = value;
-              }
-            });
-          });
-        });
-        
         return {
             albums: this.albums,
-            pictures: modifiedPictures,
-            metadata: this.metadata,
+            pictures: this.pictures,
             comments: this.comments
         }
       }
