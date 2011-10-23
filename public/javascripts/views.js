@@ -427,7 +427,7 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del");
+      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth");
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
@@ -464,6 +464,7 @@
         }
         
         that.thumbViews[picture.cid] = view;
+        that.refreshWidth();
       });
     },
     
@@ -472,6 +473,7 @@
       view.destroy();
       
       delete this.thumbViews[picture.cid];
+      this.refreshWidth();
     },
     
     render: function() {
@@ -491,8 +493,22 @@
       });
       
       $(this.el).append(els);
+      this.refreshWidth();
       
       return this;
+    },
+    
+    refreshWidth: function() {
+      var that = this;
+      setTimeout(function() {
+        var totalWidth = 0;
+        for(var pid in that.thumbViews) {
+          if (that.thumbViews.hasOwnProperty(pid)) {
+            totalWidth += $(that.thumbViews[pid].el).outerWidth(true);
+          }
+        }
+        $(that.el).css("width", totalWidth)
+      }, 0);
     }
   });
   
