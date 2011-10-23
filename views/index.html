@@ -76,7 +76,7 @@
           </div>
         </div>
       </div>
-      <div class="thumb-actions">
+      <!--<div class="thumb-actions">
         <div class="relative thumb-comments">
           <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
           <span class="comment-count">${numComments}</span>
@@ -84,7 +84,7 @@
         <a href="" class="delete">
           <img class="thumb-delete thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
         </a>
-      </div>
+      </div>-->
     </script>
     
     <script id="actionsTemplate" type="text/x-jquery-tmpl">          
@@ -103,7 +103,14 @@
         </div>
       </div>
       <div id="thumbs-container">
-      
+        <div id="thumbs-scrollbar">
+          <div class="viewport">
+            <div class="overview">
+              
+            </div>
+          </div>
+          <div class="scrollbar"><div class="track"><div class="scrollthumb"><div class="end"></div></div></div></div>
+        </div>
       </div>
       <div class="container">
         <div class="row">
@@ -176,6 +183,7 @@
     <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
     <script type="text/javascript" src="/javascripts/backbone.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.fileupload.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.tinyscrollbar.js"></script>
     <!-- <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.1.7/underscore-min.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.string/1.1.4/underscore.string.min.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.5.3/backbone-min.js"></script> -->
@@ -205,6 +213,24 @@
       body {
         padding-top: 200px;
       }
+      
+      #thumbs-scrollbar { width: 100%; }
+      #thumbs-scrollbar .viewport { width: 99.2%; height: 102px; overflow: visible; position: relative; }
+      #thumbs-scrollbar .overview { list-style: none; width: 100%; padding: 0; margin: 0; position: absolute; left: 0; top: 0;  }
+      #thumbs-scrollbar .overview img{ float: left; }
+      #thumbs-scrollbar .scrollbar{ 
+          background: transparent url(/images/bg-scrollbar-track-x-2.png) no-repeat 0 0; 
+          position: relative; margin: 0 0 5px; clear: both; height: 15px; margin-left: 5px; margin-right: 5px;}
+      #thumbs-scrollbar .track { 
+        background: transparent url(/images/bg-scrollbar-trackend-x-2.png) no-repeat 100% 0; 
+        width: 100%; height:15px; position: relative; }
+      #thumbs-scrollbar .scrollthumb { 
+        background: transparent url(/images/bg-scrollbar-thumb-x-2.png) no-repeat 100% 50%; 
+        height: 25px; cursor: pointer; overflow: hidden; position: absolute; left: 0; top: -5px; }
+      #thumbs-scrollbar .scrollthumb .end{ 
+        background: transparent url(/images/bg-scrollbar-thumb-x-2.png) no-repeat 0 50%; 
+        overflow: hidden; height: 25px; width: 5px;}
+      #thumbs-scrollbar .disable { display: none; }
       
       .comment-header {
         background-image: url("http://mediacdn.disqus.com/1315541406/images/themes/narcissus/header-grey.png");
@@ -380,7 +406,7 @@
         right: auto;
         background: #EDF6F8;
         z-index: 1000;
-        overflow-x: auto;
+        overflow-x: hidden;
         overflow-y: hidden;
       }
       
@@ -402,12 +428,11 @@
         margin: 5px 3px 5px 0px;
         list-style: none;
         background: #EDF6F8;
-        border: 1px solid #D6EAEE;
-        width: 81px;
+        border: 0px solid #D6EAEE;
       }
       
       .thumb-sprite {
-        background-image: url(//d2v1cc1dkixozt.cloudfront.net/images/control-sprite_0.4.12.png);
+        background-image: url(//d2v1cc1dkixozt.cloudfront.net/images/control-sprite_0.7.43.png);
       }
       
       .thumb-comments span {
@@ -459,14 +484,14 @@
       
       div.thumb-container {
         display: block;
-        width: 75px;
-        height: 75px;
+        width: 90px;
+        height: 90px;
         margin-bottom: 2px;
       }
       
       div.thumb-container img {
-        max-width: 75px;
-        max-height: 75px;
+        max-width: 90px;
+        max-height: 90px;
         cursor: pointer;
       }
       
@@ -482,8 +507,8 @@
       
       img.delete-thumb {
         margin: 0px auto;
-        width: 75px;
-        height: 75px;
+        width: 90px;
+        height: 90px;
       }
       
       /*Fixes the positioning of the modal*/

@@ -508,6 +508,7 @@
           }
         }
         $(that.el).css("width", totalWidth)
+        that.scrollbar.tinyscrollbar_update("relative");
       }, 0);
     },
   });
@@ -611,10 +612,10 @@
         var hasScrollBar = thumbsWidth > thumbContainerWidth;
         
         if (hasScrollBar) {
-          that.$("#thumbs-container").css("height", 130);
+          that.$("#thumbs-container").css("height", 122);
         }
         else {
-          that.$("#thumbs-container").css("height", 115);
+          that.$("#thumbs-container").css("height", 100);
         }
       }, 0);
     },
@@ -626,7 +627,9 @@
       
       this.updateTitle();
       this.updateActions();
-      this.$("#thumbs-container").append(this.thumbsView.render().el);
+      this.$("#thumbs-container .overview").append(this.thumbsView.render().el);
+      this.thumbsView.scrollbar = this.$("#thumbs-scrollbar").tinyscrollbar({axis: "x"});
+      //t = this.$("#thumbs-scrollbar");
       this.renderCurrentPicture();
       
       if (this.album.pictures.length === 0) {
