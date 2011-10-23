@@ -434,10 +434,11 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth");
+      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth", "pictureSelected", "scrollToThumb");
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
+      App.events.bind("picture:selected", this.pictureSelected)
       // You might think we need to bind to the reset event of the album,
       // but in reality, that is going to cause the entire album to re-render,
       // which will re-render us anyway.
@@ -450,6 +451,7 @@
       
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
+      App.events.unbind("picture:selected", this.pictureSelected)
     },
     
     add: function(pictures) {
@@ -481,6 +483,29 @@
       
       delete this.thumbViews[picture.cid];
       this.refreshWidth();
+    },
+    
+    pictureSelected: function(picture, scroll) {
+      var selectedThumb = null;
+      for(var pid in this.thumbViews) {
+        if (this.thumbViews.hasOwnProperty(pid)) {
+          var thumbView = this.thumbViews[pid];
+          
+          if (thumbView.picture.cid === picture.cid) {
+            $(thumbView.el).addClass("thumb-selected");
+            selectedThumb = thumbView;
+          }
+          else {
+            $(thumbView.el).removeClass("thumb-selected"); 
+          }
+        }
+      }
+      
+      this.refreshWidth();
+      
+      if (scroll) {
+        this.scrollToThumb(selectedThumb);
+      }
     },
     
     render: function() {
@@ -518,6 +543,15 @@
         that.scrollbar.tinyscrollbar_update("relative");
       }, 0);
     },
+    
+    scrollToThumb: function(thumbView) {
+      var that = this;
+      setTimeout(function() {
+        //console.log("Offset: ", $(thumbView.el).offset().left);
+        var offset = $(thumbView.el).offset().left;
+        that.scrollbar.tinyscrollbar_update(Math.max(offset, 0));
+      }, 0);
+    }
   });
   
   AlbumView = Backbone.View.extend({    
@@ -528,7 +562,7 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight", "thumbClicked");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -537,7 +571,7 @@
       this.album.bind("add", this.add);
       this.album.bind("reset", this.reset);
       this.album.bind("remove", this.del);
-      App.events.bind("thumb:clicked", this.renderCurrentPicture);
+      App.events.bind("thumb:clicked", this.thumbClicked);
     },
     
     destroy: function() {
@@ -548,13 +582,18 @@
       this.album.unbind("add", this.add);
       this.album.unbind("reset", this.reset);
       this.album.unbind("remove", this.del);
-      App.events.unbind("thumb:clicked", this.renderCurrentPicture);
+      App.events.unbind("thumb:clicked", this.thumbClicked);
     },
     
     events: {
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "blur .album-header input": "stopEditAlbumTitle",
+    },
+    
+    thumbClicked: function(picture) {
+      App.events.trigger("picture:selected", picture);
+      this.renderCurrentPicture(picture);
     },
     
     add: function() {
@@ -564,8 +603,10 @@
     
     del: function(deletedPicture) {      
       if (this.currentPicture === deletedPicture) {
-        this.currentPicture = this.album.pictures.at(0);
+        // TODO: This should probably go to the picture before/after
+        var picture = this.currentPicture = this.album.pictures.at(0);
         this.renderCurrentPicture();
+        App.events.trigger("picture:selected", picture, true);
       }
       
       if (this.album.pictures.length === 0) {
@@ -575,8 +616,9 @@
     },
     
     reset: function() {
-      this.currentPicture = this.album.pictures.at(0);
+      var picture = this.currentPicture = this.album.pictures.at(0);
       this.render();
+      App.events.trigger("picture:selected", picture);
     },
     
     stopEditAlbumTitle: function(e) {
@@ -622,7 +664,7 @@
           that.$("#thumbs-container").css("height", 122);
         }
         else {
-          that.$("#thumbs-container").css("height", 100);
+          that.$("#thumbs-container").css("height", 102);
         }
       }, 0);
     },
