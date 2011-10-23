@@ -509,7 +509,7 @@
         }
         $(that.el).css("width", totalWidth)
       }, 0);
-    }
+    },
   });
   
   AlbumView = Backbone.View.extend({    
@@ -520,7 +520,7 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -551,6 +551,7 @@
     
     add: function() {
       this.show();
+      this.refreshHeight();
     },
     
     del: function(deletedPicture) {      
@@ -562,6 +563,7 @@
       if (this.album.pictures.length === 0) {
         this.hide();
       }
+      this.refreshHeight();
     },
     
     reset: function() {
@@ -600,6 +602,23 @@
       }
     },
     
+    refreshHeight: function() {
+      var that = this;
+      setTimeout(function() {
+        var thumbsWidth = $(that.thumbsView.el).outerWidth();
+        var thumbContainerWidth = that.$("#thumbs-container").outerWidth();
+        
+        var hasScrollBar = thumbsWidth > thumbContainerWidth;
+        
+        if (hasScrollBar) {
+          that.$("#thumbs-container").css("height", 130);
+        }
+        else {
+          that.$("#thumbs-container").css("height", 115);
+        }
+      }, 0);
+    },
+    
     render: function() {
       $(this.el).empty();
       
@@ -616,6 +635,8 @@
       else {
         this.show();
       }
+      
+      this.refreshHeight();
       
       return this;
     },
