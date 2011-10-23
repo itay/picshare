@@ -223,7 +223,7 @@
     initialize: function() {
       this.picture = this.options.picture;
       
-      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription");
+      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture");
       this.picture.bind("change", this.updateDescription);
     },
     
@@ -234,6 +234,7 @@
     
     events: {
       "blur #picture-description": "descriptionChange",
+      "click a.delete": "deletePicture"
     },
     
     descriptionChange: function(e) {
@@ -250,6 +251,12 @@
     
     updateDescription: function() {
       this.$("#picture-description").val(this.picture.get("description"));
+    },
+    
+    deletePicture: function(e) {
+      e.preventDefault();
+      var view = new DeletePictureModalView({template: templates.deletePictureModal, picture: this.picture});
+      view.show();
     },
     
     render: function() {
