@@ -303,12 +303,6 @@
       this.$("#picture-image-container").append(this.pictureImageView.render().el);
       this.$("#picture-comments-container").append(this.commentsView.render().el);
       this.$("#picture-info-container").append(this.pictureInfoView.render().el);
-      
-      /*$(this.el).append([
-         this.pictureImageView.render().el,
-         this.pictureInfoView.render().el,
-         this.commentsView.render().el,
-      ]);*/
    
       return this;
     }
@@ -321,7 +315,7 @@
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount",
-                      "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
+                      "uploadProgress", "uploadDone", "uploadFail", "thumbClicked", "pictureSelected");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
@@ -334,6 +328,7 @@
       this.picture.comments.bind("add", this.updateCommentCount);
       this.picture.comments.bind("remove", this.updateCommentCount);
       this.picture.comments.bind("reset", this.updateCommentCount);
+      App.events.bind("picture:selected", this.pictureSelected);
       
     },
     
@@ -347,6 +342,7 @@
       this.picture.comments.unbind("add", this.updateCommentCount);
       this.picture.comments.unbind("remove", this.updateCommentCount);
       this.picture.comments.unbind("reset", this.updateCommentCount);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     events: {
@@ -381,6 +377,20 @@
     thumbClicked: function(e) {
       e.preventDefault();
       App.events.trigger("thumb:clicked", this.picture);
+    },
+    
+    pictureSelected: function(picture) {
+      var that = this;
+      if (this.picture.cid === picture.cid) {
+        $(this.el).addClass("thumb-selected");
+        
+        setTimeout(function() {
+          $(that.el).scrollintoview();
+        }, 0);
+      }
+      else {
+        $(this.el).removeClass("thumb-selected");
+      }
     },
     
     updateCommentCount: function() {
@@ -434,11 +444,10 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth", "pictureSelected", "scrollToThumb");
+      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth");
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
-      App.events.bind("picture:selected", this.pictureSelected)
       // You might think we need to bind to the reset event of the album,
       // but in reality, that is going to cause the entire album to re-render,
       // which will re-render us anyway.
@@ -451,7 +460,6 @@
       
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
-      App.events.unbind("picture:selected", this.pictureSelected)
     },
     
     add: function(pictures) {
@@ -485,29 +493,6 @@
       this.refreshWidth();
     },
     
-    pictureSelected: function(picture, scroll) {
-      var selectedThumb = null;
-      for(var pid in this.thumbViews) {
-        if (this.thumbViews.hasOwnProperty(pid)) {
-          var thumbView = this.thumbViews[pid];
-          
-          if (thumbView.picture.cid === picture.cid) {
-            $(thumbView.el).addClass("thumb-selected");
-            selectedThumb = thumbView;
-          }
-          else {
-            $(thumbView.el).removeClass("thumb-selected"); 
-          }
-        }
-      }
-      
-      this.refreshWidth();
-      
-      if (scroll) {
-        this.scrollToThumb(selectedThumb);
-      }
-    },
-    
     render: function() {
       $(this.el).empty();
       
@@ -539,17 +524,7 @@
             totalWidth += $(that.thumbViews[pid].el).outerWidth(true);
           }
         }
-        $(that.el).css("width", totalWidth)
-        that.scrollbar.tinyscrollbar_update("relative");
-      }, 0);
-    },
-    
-    scrollToThumb: function(thumbView) {
-      var that = this;
-      setTimeout(function() {
-        //console.log("Offset: ", $(thumbView.el).offset().left);
-        var offset = $(thumbView.el).offset().left;
-        that.scrollbar.tinyscrollbar_update(Math.max(offset, 0));
+        $(that.el).css("width", totalWidth);
       }, 0);
     }
   });
@@ -566,6 +541,7 @@
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
+      this.previousPictureIndex = 0;
       this.album.bind("change", this.updateTitle);
       this.album.bind("change", this.updateActions);
       this.album.bind("add", this.add);
@@ -603,8 +579,7 @@
     
     del: function(deletedPicture) {      
       if (this.currentPicture === deletedPicture) {
-        // TODO: This should probably go to the picture before/after
-        var picture = this.currentPicture = this.album.pictures.at(0);
+        var picture = this.currentPicture = this.album.pictures.at(this.previousPictureIndex);
         this.renderCurrentPicture();
         App.events.trigger("picture:selected", picture, true);
       }
@@ -661,10 +636,10 @@
         var hasScrollBar = thumbsWidth > thumbContainerWidth;
         
         if (hasScrollBar) {
-          that.$("#thumbs-container").css("height", 122);
+          that.$("#thumbs-container").css("height", 120);
         }
         else {
-          that.$("#thumbs-container").css("height", 102);
+          that.$("#thumbs-container").css("height", 105);
         }
       }, 0);
     },
@@ -676,9 +651,7 @@
       
       this.updateTitle();
       this.updateActions();
-      this.$("#thumbs-container .overview").append(this.thumbsView.render().el);
-      this.thumbsView.scrollbar = this.$("#thumbs-scrollbar").tinyscrollbar({axis: "x"});
-      //t = this.$("#thumbs-scrollbar");
+      this.$("#thumbs-container").append(this.thumbsView.render().el);
       this.renderCurrentPicture();
       
       if (this.album.pictures.length === 0) {
@@ -699,6 +672,8 @@
       }
       
       if (this.currentPicture) {
+        this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
+        
         // TODO: this caching is probably unnecessary, but we'll leave it in
         // for now.
         var oldPictureView = this.pictureView;

@@ -106,14 +106,6 @@
         </div>
       </div>
       <div id="thumbs-container">
-        <div id="thumbs-scrollbar">
-          <div class="viewport">
-            <div class="overview">
-              
-            </div>
-          </div>
-          <div class="scrollbar"><div class="track"><div class="scrollthumb"><div class="end"></div></div></div></div>
-        </div>
       </div>
       <div class="container">
         <div class="row">
@@ -186,7 +178,7 @@
     <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
     <script type="text/javascript" src="/javascripts/backbone.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.fileupload.js"></script>
-    <script type="text/javascript" src="/javascripts/jquery.tinyscrollbar.js"></script>
+    <script type="text/javascript" src="/javascripts/jquery.scrollintoview.js"></script>
     <!-- <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.1.7/underscore-min.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.string/1.1.4/underscore.string.min.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/backbone.js/0.5.3/backbone-min.js"></script> -->
@@ -216,24 +208,6 @@
       body {
         padding-top: 200px;
       }
-      
-      #thumbs-scrollbar { width: 100%; }
-      #thumbs-scrollbar .viewport { width: 99.2%; height: 102px; overflow: visible; position: relative; }
-      #thumbs-scrollbar .overview { list-style: none; width: 100%; padding: 0; margin: 0; position: absolute; left: 0; top: 0;  }
-      #thumbs-scrollbar .overview img{ float: left; }
-      #thumbs-scrollbar .scrollbar{ 
-          background: transparent url(/images/bg-scrollbar-track-x-2.png) no-repeat 0 0; 
-          position: relative; margin: 0 0 5px; clear: both; height: 15px; margin-left: 5px; margin-right: 5px;}
-      #thumbs-scrollbar .track { 
-        background: transparent url(/images/bg-scrollbar-trackend-x-2.png) no-repeat 100% 0; 
-        width: 100%; height:15px; position: relative; }
-      #thumbs-scrollbar .scrollthumb { 
-        background: transparent url(/images/bg-scrollbar-thumb-x-2.png) no-repeat 100% 50%; 
-        height: 25px; cursor: pointer; overflow: hidden; position: absolute; left: 0; top: -5px; }
-      #thumbs-scrollbar .scrollthumb .end{ 
-        background: transparent url(/images/bg-scrollbar-thumb-x-2.png) no-repeat 0 50%; 
-        overflow: hidden; height: 25px; width: 5px;}
-      #thumbs-scrollbar .disable { display: none; }
       
       .comment-header {
         background-image: url("http://mediacdn.disqus.com/1315541406/images/themes/narcissus/header-grey.png");
@@ -409,7 +383,7 @@
         right: auto;
         background: #EDF6F8;
         z-index: 1000;
-        overflow-x: hidden;
+        overflow-x: auto;
         overflow-y: hidden;
       }
       
