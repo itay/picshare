@@ -355,9 +355,8 @@
       var percentage = (data.loaded / data.total) * 100;
       var percentageText = parseInt(percentage, 10) + "%";
       
-      this.$(".progress-bar").polartimer('drawTimer', percentage);
-      this.$(".progress-text").text(percentageText);
-      this.$(".progress").removeClass("hidden");
+      this.$(".pgbar").progressbar({value: percentage});
+      this.$(".pgbar").removeClass("hidden");
     },
     
     uploadDone: function(data) {
@@ -411,17 +410,15 @@
       
       // Need to make this happen on the next tick, unfortunately.
       var that = this;
-      setTimeout(function() { 
-        that.$(".progress-bar").polartimer({
-          color: "#F00",
-          opacity: 1.0,
-        }); 
+      setTimeout(function() {
+        that.$(".pgbar").progressbar({value: 10});
       }, 0);
       
       
       var setThumb = function(thumbElement) {
         that.$("div.thumb-container").empty();
         that.$("div.thumb-container").append(thumbElement);
+        that.$("div.thumb-container").removeClass("hidden");
       }
       
       if (that.picture.get("thumb")) {
@@ -444,7 +441,7 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del", "refreshWidth");
+      _.bindAll(this, "destroy", "render", "add", "del");
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
@@ -481,7 +478,6 @@
         }
         
         that.thumbViews[picture.cid] = view;
-        that.refreshWidth();
       });
     },
     
@@ -490,7 +486,6 @@
       view.destroy();
       
       delete this.thumbViews[picture.cid];
-      this.refreshWidth();
     },
     
     render: function() {
@@ -510,22 +505,8 @@
       });
       
       $(this.el).append(els);
-      this.refreshWidth();
       
       return this;
-    },
-    
-    refreshWidth: function() {
-      var that = this;
-      setTimeout(function() {
-        var totalWidth = 0;
-        for(var pid in that.thumbViews) {
-          if (that.thumbViews.hasOwnProperty(pid)) {
-            totalWidth += $(that.thumbViews[pid].el).outerWidth(true);
-          }
-        }
-        $(that.el).css("width", totalWidth);
-      }, 0);
     }
   });
   
@@ -537,7 +518,7 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -575,7 +556,6 @@
     
     add: function() {
       this.show();
-      this.refreshHeight();
     },
     
     del: function(deletedPicture) {      
@@ -587,7 +567,6 @@
       if (this.album.pictures.length === 0) {
         this.hide();
       }
-      this.refreshHeight();
     },
     
     reset: function() {
@@ -627,23 +606,6 @@
       }
     },
     
-    refreshHeight: function() {
-      var that = this;
-      setTimeout(function() {
-        var thumbsWidth = $(that.thumbsView.el).outerWidth();
-        var thumbContainerWidth = that.$("#thumbs-container").outerWidth();
-        
-        var hasScrollBar = thumbsWidth > thumbContainerWidth;
-        
-        if (hasScrollBar) {
-          that.$("#thumbs-container").css("height", 120);
-        }
-        else {
-          that.$("#thumbs-container").css("height", 105);
-        }
-      }, 0);
-    },
-    
     render: function() {
       $(this.el).empty();
       
@@ -660,8 +622,6 @@
       else {
         this.show();
       }
-      
-      this.refreshHeight();
       
       return this;
     },

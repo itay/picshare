@@ -72,22 +72,10 @@
 
     <script id="thumbTemplate" type="text/x-jquery-tmpl">
       <div href="" class="thumb">
-        <div class="thumb-container">
-          <div class="progress hidden">
-            <div class="progress-bar"></div>
-            <div class="progress-text"></div>
-          </div>
+        <div class="thumb-container hidden">
         </div>
+        <div class="pgbar hidden"></div>
       </div>
-      <!--<div class="thumb-actions">
-        <div class="relative thumb-comments">
-          <img class="thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
-          <span class="comment-count">${numComments}</span>
-        </div>
-        <a href="" class="delete">
-          <img class="thumb-delete thumb-sprite" src="http://d2v1cc1dkixozt.cloudfront.net/_.gif"/>
-        </a>
-      </div>-->
     </script>
     
     <script id="actionsTemplate" type="text/x-jquery-tmpl">          
@@ -163,16 +151,15 @@
     <!-- Le styles --> 
     <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap-1.3.0.css">
     <link rel="stylesheet" href="/stylesheets/master.css" type="text/css" media="screen" title="no title">
+    <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css" type="text/css" media="screen" title="no title">
     
     <!-- Le splunk -->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/raphael/1.5.2/raphael-min.js"></script>
     <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.timeago.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.autoresize.js"></script>
-    <script type="text/javascript" src="/javascripts/jquery.polartimer.js"></script>
     <script type="text/javascript" src="/javascripts/date.format.js"></script>
     <script type="text/javascript" src="/javascripts/underscore.js"></script> 	
     <script type="text/javascript" src="/javascripts/underscore.string.js"></script>
@@ -265,19 +252,11 @@
         height: 100%;
       }
       
-      .progress {
-        width: 50px;
-        margin: 1px auto;
+      .pgbar {
+        height: 15px;
+        margin-top: 37.5px;
       }
-      
-      .progress-bar {
-        width: 50px;
-      }
-      
-      .progress-text {
-        text-align: center;
-      }
-      
+            
       .actions-wrapper {
         position: absolute;
         bottom: 0;
@@ -378,7 +357,7 @@
         position: fixed;
         width: 100%;
         top: 65px;
-        height: 130px;
+        height: 120px;
         left: auto;
         right: auto;
         background: #EDF6F8;
@@ -399,8 +378,7 @@
       }
       
       ul#thumbs li {
-        display: inline;
-        float: left;
+        display: inline-block;
         padding: 0px;
         margin: 5px 3px 5px 0px;
         list-style: none;
@@ -457,10 +435,11 @@
         display: block;
         padding: 2px 2px 0px 2px;
         margin-bottom: -2px;
+        width: 90px;
+        height: 90px;
       }
       
       div.thumb-container {
-        display: block;
         width: 90px;
         height: 90px;
         margin-bottom: 2px;
