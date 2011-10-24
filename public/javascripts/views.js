@@ -376,7 +376,7 @@
     
     thumbClicked: function(e) {
       e.preventDefault();
-      App.events.trigger("thumb:clicked", this.picture);
+      App.navigate(this.picture.url(), true);
     },
     
     pictureSelected: function(picture) {
@@ -536,8 +536,8 @@
       this.template = templates.album;
       
       _.bindAll(this, "destroy", "render", 
-        "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight", "thumbClicked");
+        "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "refreshHeight");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -547,7 +547,7 @@
       this.album.bind("add", this.add);
       this.album.bind("reset", this.reset);
       this.album.bind("remove", this.del);
-      App.events.bind("thumb:clicked", this.thumbClicked);
+      App.events.bind("picture:selected", this.pictureSelected);
     },
     
     destroy: function() {
@@ -558,7 +558,7 @@
       this.album.unbind("add", this.add);
       this.album.unbind("reset", this.reset);
       this.album.unbind("remove", this.del);
-      App.events.unbind("thumb:clicked", this.thumbClicked);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     events: {
@@ -567,9 +567,10 @@
       "blur .album-header input": "stopEditAlbumTitle",
     },
     
-    thumbClicked: function(picture) {
-      App.events.trigger("picture:selected", picture);
-      this.renderCurrentPicture(picture);
+    pictureSelected: function(picture, shouldRender) {
+      if (shouldRender) {
+        this.renderCurrentPicture(picture);
+      }
     },
     
     add: function() {
@@ -580,8 +581,7 @@
     del: function(deletedPicture) {      
       if (this.currentPicture === deletedPicture) {
         var picture = this.currentPicture = this.album.pictures.at(this.previousPictureIndex);
-        this.renderCurrentPicture();
-        App.events.trigger("picture:selected", picture, true);
+        App.navigate(picture.url(), true);
       }
       
       if (this.album.pictures.length === 0) {
@@ -593,7 +593,7 @@
     reset: function() {
       var picture = this.currentPicture = this.album.pictures.at(0);
       this.render();
-      App.events.trigger("picture:selected", picture);
+      App.events.trigger("picture:selected", picture, false);
     },
     
     stopEditAlbumTitle: function(e) {
@@ -947,7 +947,10 @@
       "": "index",
       "/": "index",
       "/new": "new",
-      "/albums/:aid": "viewAlbum"
+      "/albums/:aid": "viewAlbum",
+      "/albums/:aid/": "viewAlbum",
+      "/albums/:aid/pictures/:pid": "viewAlbum",
+      "/albums/:aid/pictures/:pid/": "viewAlbum"
     },
     
     index: function() {
@@ -961,16 +964,29 @@
       this.uploadView.render();
     },
     
-    viewAlbum: function(aid) {
+    viewAlbum: function(aid, pid) {
+      var selectPictureIfNecessary = function() {
+        if (pid) {
+          var picture = App.album.pictures.get(pid);
+          App.events.trigger("picture:selected", picture, true);
+        }
+      };
+      
       // Don't re-render the page unless
       // we have to.
       if (App.album && App.album.get("id") === aid) {
         this.uploadView.render();
+        selectPictureIfNecessary();
       }
       else {
         this.uploadView.render();
         this.createAndRenderAlbum({id: aid});
         this.album.fetch();
+        this.album.pictures.fetch({
+          success: function() {
+            selectPictureIfNecessary();
+          }
+        });
       }
     },
     

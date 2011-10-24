@@ -139,7 +139,6 @@
     },
     
     fetch: function(options) {
-      this.pictures.fetch();
       Backbone.Model.prototype.fetch.apply(this, arguments);
     },
     
