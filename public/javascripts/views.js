@@ -627,6 +627,10 @@
     },
     
     renderCurrentPicture: function(picture) {
+      if (this.currentPicture === picture) {
+        return;
+      }
+      
       if (picture) {
         this.currentPicture = picture;
       }
@@ -660,7 +664,7 @@
     },
     
     updateActions: function() {
-      this.$(".actions-wrapper").html(templates.actions.tmpl({
+      this.$(".album-actions").html(templates.actions.tmpl({
         actions: this.getActions()
       }));
     },
