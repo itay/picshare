@@ -473,7 +473,10 @@
         }
         
         that.thumbViews[picture.cid] = view.render();
-        $(that.el).carousel('add', $(view.el));
+        
+        _.defer(function() {
+          $(that.el).carousel('add', $(view.el));
+        });
       });
     },
     
@@ -482,8 +485,11 @@
       delete this.thumbViews[picture.cid];
       
       var that = this;
-      $(that.el).carousel('add', $(view.el));
-      view.destroy();
+      
+      _.defer(function() {
+        $(that.el).carousel('remove', $(view.el));
+        view.destroy();
+      });
     },
     
     render: function() {
