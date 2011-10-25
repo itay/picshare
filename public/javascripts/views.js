@@ -510,11 +510,9 @@
         $(that.el).carousel({
           pagination: false,
           create_: function() {
-            console.log("Boo");
             _.each(that.thumbViews, function(thumbView) {
               $(that.el).carousel('add', $(thumbView.el));
             });
-            console.log($(that.el));
           }
         });
         
