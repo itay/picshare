@@ -2,11 +2,12 @@
 // Fixed heights
 @navBarHeight: 40px;
 @albumHeaderHeight: 30px;
-@thumbBarHeight: 120px;
+@thumbBarHeight: 105px;
 
 // Colors
 @backgroundColor: #EDF6F8;
 @highlightColor: darken(@backgroundColor, 60%);
+
 
 
 body {
@@ -187,22 +188,9 @@ body {
     margin-top: (@thumbHeight / 2) - (@progressBarHeight / 2);
   }
 
-  ul#thumbs {
-    clear: both;
-    margin: 0;
-    padding: 0;
-    white-space: nowrap;
-    list-style: none;
-    display: block;
-    margin-left: 5px;
-    margin-right: 5px;
-  }
-
   ul#thumbs li {
-    display: inline-block;
     padding: 0px;
     margin: 5px 5px 5px 0px;
-    list-style: none;
   }
 
   div.thumb {
@@ -325,3 +313,126 @@ body {
 }
 
 /////////////////////////////////////
+
+
+///////////// Carousel //////////////
+
+/* carousel */
+.rs-carousel {
+  overflow: hidden;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+    
+.rs-carousel .rs-carousel-mask {
+  position:relative;
+  overflow:hidden;
+  /*border:6px solid #444;*/
+  }
+
+.rs-carousel .rs-carousel-runner {
+  position: absolute;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  height: 105px;
+}
+
+.no-js .rs-carousel .rs-carousel-runner {
+  position: static;
+}
+
+.rs-carousel .rs-carousel-item {
+  float: left;
+  color: #fff;
+  font-size: 8em;
+  text-align: center;
+  margin: 0;
+}
+
+.rs-carousel.rs-carousel-vertical .rs-carousel-item {
+  float: none;
+}
+
+/* pagination */
+.rs-carousel-pagination {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rs-carousel-disabled .rs-carousel-pagination {
+  display: none;
+}
+
+.rs-carousel-pagination-link {
+  display: inline;
+}
+
+.rs-carousel-pagination-link a {
+  padding: 2px 6px;
+}
+
+.rs-carousel-pagination-link a:hover {
+  text-decoration: none;
+}
+
+.rs-carousel-pagination-link-active a {
+  background: #444;
+  color: #fff;
+}
+
+#thumb-carousel {
+  opacity: 1.0;
+}
+
+.rs-carousel-mask {
+  height: @thumbBarHeight;
+}
+
+/* next & prev actions */
+.rs-carousel-action-disabled {
+  display: none;
+}
+
+.rs-carousel-action-disabled {
+  color: gray;
+  cursor: default;
+}
+
+.rs-carousel-disabled .rs-carousel-action-next,
+.rs-carousel-disabled .rs-carousel-action-prev {
+  display: none;
+}   
+
+.rs-carousel-action-prev:hover,
+.rs-carousel-action-next:hover {
+  background-position: 0 0;
+}
+
+.rs-carousel-action-next {
+  position: absolute;
+  top: (@thumbBarHeight / 2 - 30 / 2);
+  right: 10px;
+  z-index: 100;
+  width: 30px;
+  height: 30px;
+  text-indent: -999999px;
+  background: url(/images/gray_next.png) no-repeat 0 -30px;
+  cursor: pointer;
+  font-size: 0px;
+}
+  
+.rs-carousel-action-prev {
+  position: absolute;
+  top: (@thumbBarHeight / 2 - 30 / 2);
+  left: 10px;
+  z-index: 100;
+  width: 30px;
+  height: 30px;
+  text-indent: -999999px;
+  background: url(/images/gray_prev.png) no-repeat 0 -30px;
+  cursor: pointer;
+  font-size: 0px;
+}

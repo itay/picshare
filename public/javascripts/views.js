@@ -1,6 +1,7 @@
 (function() {
   var templates = {
     thumb: $("#thumbTemplate"),
+    thumbs: $("#thumbsTemplate"),
     album: $("#albumTemplate"),
     deleteAlbumModal: $("#deleteAlbumModalTemplate"),
     deletePictureModal: $("#deletePictureModalTemplate"),
@@ -310,6 +311,7 @@
   
   ThumbView = Backbone.View.extend({
     tagName: "li",
+    className: "rs-carousel-item",
     width: 75,
     height: 75,
     
@@ -320,6 +322,7 @@
       this.template = templates.thumb;
       this.picture = this.options.picture;
       this.isEdit = this.options.isEdit;
+      this.thumbsView = this.options.thumbsView;
       
       this.picture.bind("change", this.render);
       this.picture.bind("upload:progress", this.uploadProgress);
@@ -383,9 +386,9 @@
       if (this.picture.cid === picture.cid) {
         $(this.el).addClass("thumb-selected");
         
-        setTimeout(function() {
-          $(that.el).scrollintoview();
-        }, 0);
+        _.defer(function() {
+          $(that.thumbsView.el).carousel('goToItem', $(that.el), true);
+        });
       }
       else {
         $(this.el).removeClass("thumb-selected");
@@ -433,10 +436,10 @@
   });
   
   ThumbsView = Backbone.View.extend({
-    tagName: "ul",
-    className: "",
-    id: "thumbs",
-    
+    tagName: "div",
+    className: "rs-carousel module",
+    id: "thumb-carousel",
+    template: templates.thumbs,
     
     initialize: function() {
       this.album = this.options.album;
@@ -462,34 +465,30 @@
     add: function(pictures) {
       var that = this;
       _.each(pictures, function(picture) {
-        var view = new ThumbView({picture: picture});
+        var view = new ThumbView({picture: picture, thumbsView: that});
         var index = that.album.pictures.indexOf(picture);
         
         if (index < 0) {
           alert("WTF?");
         }
-    
-        if (index > 0) {
-          var viewBefore = that.thumbViews[that.album.pictures.at(index - 1).cid];
-          $(viewBefore.el).after(view.render().el);
-        }
-        else {
-          $(that.el).prepend(view.render().el);
-        }
         
-        that.thumbViews[picture.cid] = view;
+        that.thumbViews[picture.cid] = view.render();
+        $(that.el).carousel('add', $(view.el));
       });
     },
     
     del: function(picture) {
       var view = this.thumbViews[picture.cid];
-      view.destroy();
-      
       delete this.thumbViews[picture.cid];
+      
+      var that = this;
+      $(that.el).carousel('add', $(view.el));
+      view.destroy();
     },
     
     render: function() {
       $(this.el).empty();
+      $(this.el).html(this.template.tmpl());
       
       _.each(this.thumbViews, function(thumbView) {
         thumbView.destroy();
@@ -498,16 +497,35 @@
       var that = this;
       var els = [];
       this.album.pictures.each(function(picture) {
-        var view = new ThumbView({picture: picture});
+        var view = new ThumbView({picture: picture, thumbsView: that});
         els.push(view.render().el);
         
         that.thumbViews[picture.cid] = view;
       });
+      //$(this.el).append(els);
       
-      $(this.el).append(els);
+      var that = this;
+      _.defer(function() {
+        //$(that.el).carousel('destroy');
+        $(that.el).carousel({
+          pagination: false,
+          create_: function() {
+            console.log("Boo");
+            _.each(that.thumbViews, function(thumbView) {
+              $(that.el).carousel('add', $(thumbView.el));
+            });
+            console.log($(that.el));
+          }
+        });
+        
+      });
       
       return this;
-    }
+    },
+    
+    createCarousel: function() {
+      
+    },
   });
   
   AlbumView = Backbone.View.extend({    
@@ -614,6 +632,7 @@
       this.updateTitle();
       this.updateActions();
       this.$("#thumbs-container").append(this.thumbsView.render().el);
+      
       this.renderCurrentPicture();
       
       if (this.album.pictures.length === 0) {
