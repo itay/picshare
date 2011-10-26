@@ -435,7 +435,9 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del");
+      _.bindAll(this, "destroy", "render", "add", "del", "resize");
+      
+      $(window).bind('resize', this.resize);
       
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
@@ -449,8 +451,18 @@
     destroy: function() {
       this.remove();
       
+      $(window).unbind('resize', this.resize);
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
+    },
+    
+    resize: function() {
+      if (this.carouselInitialized) {
+        var that = this;
+        _.defer(function() {
+          $(that.el).carousel('refresh');
+        });
+      }
     },
     
     add: function(pictures) {
@@ -499,17 +511,16 @@
         
         that.thumbViews[picture.cid] = view;
       });
-      //$(this.el).append(els);
       
       var that = this;
       _.defer(function() {
-        //$(that.el).carousel('destroy');
         $(that.el).carousel({
           pagination: false,
           create_: function() {
             _.each(that.thumbViews, function(thumbView) {
               $(that.el).carousel('add', $(thumbView.el));
             });
+            that.carouselInitialized = true;
           }
         });
         
@@ -531,7 +542,7 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected", "updateActionButtons");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -586,6 +597,8 @@
     },
     
     add: function() {
+      this.updateActionButtons();
+      
       this.show();
     },
     
@@ -594,6 +607,8 @@
         var picture = this.currentPicture = this.album.pictures.at(this.previousPictureIndex);
         App.navigate(picture.url(), true);
       }
+      
+      this.updateActionButtons();
       
       if (this.album.pictures.length === 0) {
         this.hide();
@@ -685,23 +700,31 @@
         this.pictureView = this.currentPicture.fullView = pictureView;
         this.$("#full-size").append(this.pictureView.el);
         
-        if (this.album.pictures.isFirst(this.currentPicture)) {
-          this.$("#full-size").addClass("first-picture");
-        }
-        else {
-          this.$("#full-size").removeClass("first-picture");
-        }
-        
-        if (this.album.pictures.isLast(this.currentPicture)) {
-          this.$("#full-size").addClass("last-picture");
-        }
-        else {
-          this.$("#full-size").removeClass("last-picture");
-        }
+        this.updateActionButtons();
         
         if (oldPictureView) {
           $(oldPictureView.el).detach();
         }
+      }
+    },
+    
+    updateActionButtons: function() {
+      if (!this.currentPicture) {
+        return;
+      }
+      
+      if (this.album.pictures.isFirst(this.currentPicture)) {
+        this.$("#full-size").addClass("first-picture");
+      }
+      else {
+        this.$("#full-size").removeClass("first-picture");
+      }
+      
+      if (this.album.pictures.isLast(this.currentPicture)) {
+        this.$("#full-size").addClass("last-picture");
+      }
+      else {
+        this.$("#full-size").removeClass("last-picture");
       }
     },
     

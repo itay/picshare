@@ -114,11 +114,12 @@ body {
       
       .action-button {
         position: absolute;
-        top: 50%;
+        //top: 50%; // <-- This will vertically center it, which is not good right now
+        top: 110px;
         width: @actionButtonWidth;
         height: @actionButtonHeight;
         margin: 0px;
-        z-index: 1000;
+        z-index: 100;
         opacity: 0.4;
       }
       .action-button:hover {
