@@ -10,43 +10,95 @@
     var knoxClient = knox.createClient({key:'AKIAIOPRNXFE5YO3VOWQ', 
                        secret:'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',
                        bucket:'apanda'});
-    function generateThumb(image) {
-        var width = image.width;
-        var height = image.height;
-        var wratio = 90/width;
-        var hratio = 90/height;
-        var nheight, nwidth;
-        if (wratio > hratio) {
-            nheight = Math.round(wratio * height);
-            nwidth = Math.round(wratio * width);
+                       
+    var resize = function(image, targetWidth, targetHeight, force) {
+        var width = image.width; 
+        var height = image.height; 
+        
+        var widthFactor = targetWidth / width;
+        var heightFactor = targetHeight / height;
+        
+        if (widthFactor > heightFactor) {
+            scaleFactor = widthFactor; // scale to fit height
         }
         else {
-            nheight = Math.round(hratio * height);
-            nwidth = Math.round(hratio * width);
+            scaleFactor = heightFactor; // scale to fit width
         }
-        var thumb = new canvas(90, 90);
-        thumb.getContext('2d').drawImage(image, 0, 0, 90, 90);
-        return thumb;
+        
+        var targetAspect = targetWidth / targetHeight;
+        
+        var sx = 0;
+        var sy = 0;
+        var sWidth = 0;
+        var sHeight = 0;
+        
+        if (widthFactor > heightFactor) {
+            sHeight = height * (width / (targetAspect * height));
+            sWidth = width;
+            sy = height / 2 - sHeight / 2;
+        }
+        else {
+            sWidth = width * (targetAspect * height / width);
+            sHeight = height;
+            sx = width / 2 - sWidth / 2;
+        }
+        
+        if (force) {
+            sx = 0;
+            sWidth = width;
+            sy = 0;
+            sHeight = height;
+            if (width > height) {
+                targetHeight = targetHeight * (height / width) * targetAspect;
+            }
+            else { 
+                targetWidth = targetWidth * (width / height) / targetAspect;
+            }
+        }
+        else if (width <= targetWidth && height <= targetHeight ) {
+            sx = 0;
+            sy = 0;
+            sWidth = targetWidth = width;
+            sHeight = targetHeight = height;
+        }
+        else if (width <= targetWidth && height > targetHeight) {
+            sx = 0;
+            sWidth = targetWidth = width / scaleFactor;
+            sy = height / 2 - targetHeight / 2;
+            sHeight = targetHeight;
+        }
+        else if (width > targetWidth && height <= targetHeight) {
+            sy = 0;
+            sHeight = targetHeight = height / scaleFactor;
+            sx = width / 2 - width / 2;
+            sx = targetWidth;
+        }
+        
+        var resized = new canvas(targetWidth, targetHeight);
+        var context = resized.getContext('2d');
+        try {
+            context.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+        catch(e) {
+            // We do nothing on exceptions for now, except print em
+            console.log(e);
+        }
+        
+        return resized;
+    }  
+    
+    var THUMB_WIDTH = 90;
+    var THUMB_HEIGHT = 90;
+    var FULL_WIDTH = 1000;
+    var FULL_HEIGHT = 667;
+                         
+    function generateThumb(image) {
+        return resize(image, THUMB_WIDTH, THUMB_HEIGHT);
     }
 
-    function generateNormalSizedImage(image) {
-        var width = image.width;
-        var height = image.height;
-        var wratio = 800/width;
-        var hratio = 600/height;
-        var nheight, nwidth;
-        if (wratio > hratio) {
-            nheight = Math.round(hratio * height);
-            nwidth = Math.round(hratio * width);
-        }
-        else {
-            nheight = Math.round(wratio * height);
-            nwidth = Math.round(wratio * width);
-        }
-        var img = new canvas(nwidth, nheight);
-        img.getContext('2d').drawImage(image, 0, 0, nwidth, nheight);
-        return img;
+    function generateNormalSizedImage(image) {        
+        return resize(image, FULL_WIDTH, FULL_HEIGHT, true);
     }
+    
     function sendMessageIfNecessary(channel, url, thumburl, normalurl) {
         if (url && thumburl && normalurl) {
             sendingClient.publish('done:' + channel, url + '^' + thumburl + '^' + normalurl);
