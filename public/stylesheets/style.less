@@ -90,18 +90,49 @@ body {
 #full-size {
 
   .content {
+    @actionButtonWidth: 30px;
+    @actionButtonHeight: 48px;
+    @actionButtonMargin: 10px;
+    @totalWidth: 940px;
+    
     background: @backgroundColor;
     padding-top: 10px;
     margin-top: 10px;
   
+  
     // Styles for full size image
     .full-size-image {
+      width: 100%; 
+      position: relative;
         
       img {
         display: block;
         max-height: 614px;
         max-width: 920px;
         margin: 1px auto;
+      }
+      
+      .action-button {
+        position: absolute;
+        top: 50%;
+        width: @actionButtonWidth;
+        height: @actionButtonHeight;
+        margin: 0px;
+        z-index: 1000;
+        opacity: 0.4;
+      }
+      .action-button:hover {
+        opacity: 1.0;
+      }
+      
+      .action-button-next {
+        left: @totalWidth + @actionButtonMargin;
+        background: url(/images/action-next.png) no-repeat 0 0;
+      }
+      
+      .action-button-prev {
+        left: -@actionButtonMargin - @actionButtonWidth;
+        background: url(/images/action-prev.png) no-repeat 0 0;
       }
     }
     
@@ -120,6 +151,13 @@ body {
     }
   } 
 }
+      
+.last-picture .action-button-next {
+  display: none;
+}
+.first-picture .action-button-prev, {
+  display: none;
+} 
 
 /////////////////////////////////////
 

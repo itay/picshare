@@ -12,7 +12,7 @@
     pictureImage: $("#pictureImageTemplate"),
     pictureInfo: $("#pictureInfoTemplate"),
     pictureView: $("#pictureViewTemplate"),
-    actions: $("#actionsTemplate")
+    actions: $("#actionsTemplate"),
   };
   
   CommentView = Backbone.View.extend({
@@ -181,8 +181,7 @@
   PictureImageView = Backbone.View.extend({
     tagName: "div",
     className: "full-size-image",
-    width: 520,
-    height: 520,
+    template: templates.pictureImage,
     
     initialize: function() {
       this.picture = this.options.picture;
@@ -199,17 +198,9 @@
     render: function() {
       $(this.el).empty();
       
-      var that = this;
-      var setImage = function(imageElement) {
-        $(that.el).empty();
-        $(that.el).append(imageElement);
-      };
-      
-      if (this.picture.get("full")) {
-        var img = $("<img>");
-        img.prop("src", this.picture.get("full"));
-        setImage(img);
-      }
+      $(this.el).html(this.template.tmpl({
+        src: this.picture.get("full")
+      }));
       
       return this;
     }
@@ -540,7 +531,7 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -567,7 +558,25 @@
     events: {
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
+      "click .action-button-next": "nextPicture",
+      "click .action-button-prev": "prevPicture",
       "blur .album-header input": "stopEditAlbumTitle",
+    },
+    
+    nextPicture: function() {
+      var index = this.album.pictures.indexOf(this.currentPicture) + 1;
+      if (index < this.album.pictures.length) {
+        var picture = this.album.pictures.at(index);
+        App.events.trigger("picture:selected", picture, true);
+      }
+    },
+    
+    prevPicture: function() {
+      var index = this.album.pictures.indexOf(this.currentPicture) - 1;
+      if (index >= 0) {
+        var picture = this.album.pictures.at(index);
+        App.events.trigger("picture:selected", picture, true);
+      }
     },
     
     pictureSelected: function(picture, shouldRender) {
@@ -675,6 +684,20 @@
         
         this.pictureView = this.currentPicture.fullView = pictureView;
         this.$("#full-size").append(this.pictureView.el);
+        
+        if (this.album.pictures.isFirst(this.currentPicture)) {
+          this.$("#full-size").addClass("first-picture");
+        }
+        else {
+          this.$("#full-size").removeClass("first-picture");
+        }
+        
+        if (this.album.pictures.isLast(this.currentPicture)) {
+          this.$("#full-size").addClass("last-picture");
+        }
+        else {
+          this.$("#full-size").removeClass("last-picture");
+        }
         
         if (oldPictureView) {
           $(oldPictureView.el).detach();

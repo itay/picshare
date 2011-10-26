@@ -174,11 +174,21 @@
     
     initialize: function(models, options) {
       options = options || {};
+      
+      _.bindAll(this, "isFirst", "isLast");
     },
     
     url: function() {
       var base = this.album.url();
       return base + "/pictures";
+    },
+    
+    isFirst: function(picture) {
+      return picture.cid === this.first().cid;
+    },
+    
+    isLast: function(picture) {
+      return picture.cid === this.last().cid;
     }
   });
 })();
