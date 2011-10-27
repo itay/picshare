@@ -138,6 +138,29 @@
       }
     },
     
+    save: function(attrs, options) {
+      if (!this.isCreating) {
+        options = options || {}
+        options.success = options.success || function() {}
+        options.error = options.error || function() {};
+        
+        var that = this;
+        var newOptions = {
+          success: function() {
+            that.isCreating = false;
+            options.success.apply(that, arguments);
+          },
+          error: options.error
+        }
+      
+        if (this.isNew()) {
+          this.isCreating = true;
+        }
+        
+        Backbone.Model.prototype.save.apply(this, arguments);
+      }
+    },
+    
     fetch: function(options) {
       Backbone.Model.prototype.fetch.apply(this, arguments);
     },

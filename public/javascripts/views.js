@@ -5,7 +5,6 @@
     album: $("#albumTemplate"),
     deleteAlbumModal: $("#deleteAlbumModalTemplate"),
     deletePictureModal: $("#deletePictureModalTemplate"),
-    upload: $("#uploadTemplate"),
     newCommentForm: $("#newCommentFormTemplate"),
     comment: $("#commentTemplate"),
     comments: $("#commentsTemplate"),
@@ -13,6 +12,7 @@
     pictureInfo: $("#pictureInfoTemplate"),
     pictureView: $("#pictureViewTemplate"),
     actions: $("#actionsTemplate"),
+    dropOverlay: $("#dropOverlayTemplate"),
   };
   
   CommentView = Backbone.View.extend({
@@ -542,7 +542,8 @@
       
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
-        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected", "updateActionButtons");
+        "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected", "updateActionButtons",
+        "uploadPictures");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -567,11 +568,17 @@
     },
     
     events: {
+      "click .album-actions a.add": "uploadPictures",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "click .action-button-next": "nextPicture",
       "click .action-button-prev": "prevPicture",
       "blur .album-header input": "stopEditAlbumTitle",
+    },
+    
+    uploadPictures: function(e) {
+      e.preventDefault();
+      App.uploadView.show();
     },
     
     nextPicture: function() {
@@ -648,7 +655,7 @@
         return [];
       }
       else {
-        return ["Share", "Delete"]  
+        return ["Add", "Share", "Delete"]  
       }
     },
     
@@ -825,126 +832,140 @@
   });
   
   UploadView = Backbone.View.extend({
-    tagName: "div",
-    className: "upload-container",
+    dropOverlay: "#drop-overlay",
+    el: "#file-upload",
     
     initialize: function() {
+      
+      $(this.el).modal({
+        backdrop: true,
+        keyboard: true
+      })
+      var that = this;
+      $(this.el).bind('hide', function() {
+        that.isShown = false;
+        that.isDragging = false;
+        $(that.dropOverlay).remove();
+      });
+      $(this.el).bind('show', function() {
+        that.isShown = true;
+      });
+      
       this.template = templates.upload;
-      _.bindAll(this, "render", "dragenter", "dragover", "drop", "dragexit", "show", "hide");
+      _.bindAll(this, "render", "show", "hide");
     },
     
-    events: {
-      "dragenter": "dragenter",
-      "dragleave": "dragexit",
-      "dragover": "dragover",
-      "drop": "drop",
-    },
-    
-    show: function() {
-      $(this.el).appendTo($("body"));
+    show: function(isDragging) {
+      var hideOnLeave = isDragging && !this.isShown;
+      if (!this.isShown) {
+        $(this.el).modal('show');
+      }
+      
+      var that = this;
+      console.log("SHOW: ", isDragging, this.isDragging);
+      if (isDragging && !this.isDragging) {
+        this.isDragging = true;
+        $(templates.dropOverlay.tmpl()).appendTo($(document.body))
+          .bind('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          })
+          .bind("dragleave", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            that.isDragging = false;
+            if (hideOnLeave) {
+              $(that.el).modal("hide"); 
+            }
+            else {
+              console.log($(that.dropOverlay));
+              $(that.dropOverlay).remove();
+            }
+          })
+      }
     },
     
     hide: function() {
-      $(this.el).detach();
+      $(this.el).modal("hide");
     },
     
     dragenter: function(e) {
       e.preventDefault();
       e.stopPropagation();
-      
-    },
-    
-    dragexit: function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      this.hide();
-    },
-    
-    dragover: function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    
-    drop: function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      this.hide();
-      
-      // A tentative album
-      var album = App.album;
-      var numReading = 0;
-      var pictures = [];
-      
-      // OK, we got some drop - time to do some work
-      var handleFile = function(file) {
-        var picture = new Picture(
-          {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            filename: file.fileName,
-            description: ""
-          },
-          {
-            album: album    
-          }
-        );
-        
-        picture.save(null, {
-          success: function() {
-            // OK, we've saved the data, now we can upload
-            // the actual file
-            album.pictures.add(picture);
-            picture.setData(file);
-          },
-          error: function() {
-            console.log("Picture save fail...", picture, album);
-          }
-        });
-      };
-
-      var files = e.originalEvent.dataTransfer.files;
-      var imageFiles = [];
-      for(var i = 0; i < files.length; i++) {
-        var file = e.originalEvent.dataTransfer.files[i];
-        
-        if (!_.startsWith(file.type, "image")) {
-          alert(_.sprintf("File %s is not an image: %s", file.name, file.type));
-          continue;
-        }
-        else {
-          numReading++;
-          imageFiles.push(file);
-        }
-      }
-      
-      if (imageFiles.length > 0 && album.isNew()) {
-        album.save({}, {
-          success: function() {
-            _.each(imageFiles, function(imageFile) { handleFile(imageFile); });
-            
-            App.navigate(album.url(), true);
-          }
-        })
-      }
-      else {
-        _.each(imageFiles, function(imageFile) { handleFile(imageFile); });
-      }
     },
     
     render: function() {
-      $(this.el).empty();
-      $(this.el).append(this.template.tmpl());
-      
-      $("drop-target").bind('dragenter dragover dragleave drop', false);
+      this.isShown = false;
+      $(this.el).modal('hide');
       
       return this;
     },
   });
   
+  var savePicture = function(album, file, data) {
+    var picture = new Picture(
+      {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        filename: file.fileName,
+        description: ""
+      },
+      {
+        album: album    
+      }
+    );
+    
+    var executeSave = function() {
+      picture.save(null, {
+        success: function() {
+          // OK, we've saved the data, now we can upload
+          // the actual file
+          album.pictures.add(picture);
+          data.picture = picture;
+          data.url = picture.url() + "/data";
+          data.submit()
+            .success(function(result, textStatus, jqxhr) {
+              console.log("success: " + picture.cid);
+              picture.set(result);
+              picture.trigger("upload:done");
+            }).error(function(jqxhr, textStatus, errorThrown) {
+              console.log("error: " + picture.cid);
+              picture.trigger("upload:fail", textStatus);
+            });
+        },
+        error: function() {
+          console.log("Picture save fail...", picture, album);
+        }
+      });
+    };
+    
+    if (album.isNew() && !album.isCreating) {
+      album.save({}, {
+        success: function() {
+          _.each(album.queue, function(fn) {
+            fn();
+          });
+          
+          album.queue = [];
+          App.navigate(album.url(), true);
+        }
+      });
+      
+      album.queue = [];
+      album.queue.push(executeSave);
+    }
+    else if (album.isNew() && album.isCreating) {
+      album.queue.push(executeSave);
+    }
+    else {
+      executeSave();
+    }
+  };
+  
   PicshareApp = Backbone.Router.extend({
+    upload: "#file-upload",
+    
     initialize: function() {
       window.App = this;  
       
@@ -960,14 +981,19 @@
       var that = this;
       $(document).bind("dragenter", function(e) {
         e.preventDefault();
-        that.uploadView.show();
-      });
-      $(document.body).bind("dragenter", function(e) {
-        e.preventDefault();
-        that.uploadView.show();
+        that.uploadView.show(true);
       });
       
+      var that = this;
       $("#file-upload").fileupload({
+        namespace: "upload",
+        add: function(e, data) {
+          that.uploadView.hide();
+          savePicture(that.album, data.files[0], data);
+        },
+        drop: function(e, data) {
+          that.uploadView.hide();
+        },
         progress: function(e, data) {
           var picture = data.picture;
           picture.trigger("upload:progress", data);
@@ -1027,9 +1053,10 @@
         this.albumView.destroy();
       }
       
+      var that = this;
       this.album = new Album(options);
       this.albumView = new AlbumView({album: this.album});
-      $("#album-container").append(this.albumView.render().el);
+      $("#album-container").append(that.albumView.render().el);
     },
     
     showAlbum: function() {

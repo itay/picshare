@@ -147,14 +147,8 @@
       </div>
     </script>
     
-    <script id="uploadTemplate" type="text/x-jquery-tmpl">
-      <div id="drop-target"></div>
-      <div class="upload-backdrop"></div>
-      <div id="drop-label">
-        <div>
-          <h1>Drop Images Anywhere!</h1>
-        </div>
-      </div>
+    <script id="dropOverlayTemplate" type="text/x-jquery-tmpl">
+      <div id="drop-overlay"></div>
     </script>
  
     <!-- Le styles --> 
@@ -167,7 +161,6 @@
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
     <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="/javascripts/bootstrap.modal.js"></script>
     <script type="text/javascript" src="/javascripts/bootstrap-modal.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.timeago.js"></script>
     <script type="text/javascript" src="/javascripts/jquery.autoresize.js"></script>
@@ -197,12 +190,6 @@
       $(document).ready(function() {   
         var app = new PicshareApp();
         Backbone.history.start();
-        
-        // Cancel drops in other places
-        $("body").bind('dragenter dragover', false).bind("drop", function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-        });
       });
     </script>
   </head>
@@ -223,9 +210,16 @@
     <div id="album-container">      
     </div>
     
-    <div id="file-upload">
-      <!--<input id="fileupload" type="file" name="files[]" multiple>-->
+    <div id="file-upload" class="modal fade">
+      <div class="modal-header">
+        <a href="#" class="close">×</a>
+      </div>
+      <div class="modal-body">
+        <div id="upload-text">Drag or click to upload pictures</div>
+        <input id="upload-input" type="file" name="files[]" multiple>
+      </div>
     </div>
+
     
     <div class="container" id="footer-container">
       <footer> 
