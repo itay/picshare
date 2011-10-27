@@ -751,11 +751,10 @@
     initialize: function() {
       this.template = this.options.template;
       this.el = $(this.template.tmpl(this.options.templateContext));
-      this.modal = this.el.modal({
+      $(this.el).modal({
         backdrop: true,
-        modal: true,
-        closeOnEscape: true
-      });
+        keyboard: true
+      })
       
       _.bindAll(this, "show", "hide", "primaryClicked", "secondaryClicked");
       
@@ -768,7 +767,7 @@
     },
     
     show: function() {
-      this.modal.open();
+      $(this.el).modal('show');
     },
     
     hide: function(e) {
@@ -776,7 +775,7 @@
         e.preventDefault();
       }
       
-      this.modal.close();
+      $(this.el).modal('hide');
     },
     
     primaryClicked: function(e) {
