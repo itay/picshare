@@ -11,77 +11,49 @@
                        secret:'Za/GdD7ZFVc4v8GZMHud7WRBSIyr/c6fyZlwGXBM',
                        bucket:'apanda'});
                        
-    var resize = function(image, targetWidth, targetHeight, force) {
-        var width = image.width; 
-        var height = image.height; 
+    var resize = function(image, targetWidth, targetHeight, thumbnail) {
+        var imageWidth = image.width;
+        var imageHeight = image.height;
         
-        var widthFactor = targetWidth / width;
-        var heightFactor = targetHeight / height;
-        
+        var widthFactor = imageWidth / targetWidth;
+        var heightFactor = imageHeight / targetHeight;
+
+        var croppedWidth;
+        var croppedHeight;
+        var offsetRow;
+        var offsetCol;
+
         if (widthFactor > heightFactor) {
-            scaleFactor = widthFactor; // scale to fit height
+            croppedWidth = targetWidth * heightFactor;
+            croppedHeight = targetHeight * heightFactor;
+            offsetRow = 0;
+            offsetCol = Math.max((imageWidth - croppedWidth) / 2, 0);
         }
         else {
-            scaleFactor = heightFactor; // scale to fit width
-        }
+            croppedWidth = targetWidth * widthFactor;
+            croppedHeight = targetHeight * widthFactor;
+            offsetRow = Math.max((imageHeight - croppedHeight) / 2, 0);
+            offsetCol = 0;
+        }                
         
-        var targetAspect = targetWidth / targetHeight;
-        
-        var sx = 0;
-        var sy = 0;
-        var sWidth = 0;
-        var sHeight = 0;
-        
-        if (widthFactor > heightFactor) {
-            sHeight = height * (width / (targetAspect * height));
-            sWidth = width;
-            sy = height / 2 - sHeight / 2;
+        if (!thumbnail && imageWidth <= targetWidth && imageHeight <= targetHeight) {
+            // In this case, we want to do nothing
+            offsetCol = 0;
+            offsetRow = 0;
+            croppedWidth = targetWidth = imageWidth;
+            croppedHeight = targetHeight = imageHeight;
         }
-        else {
-            sWidth = width * (targetAspect * height / width);
-            sHeight = height;
-            sx = width / 2 - sWidth / 2;
-        }
-        
-        if (force) {
-            sx = 0;
-            sWidth = width;
-            sy = 0;
-            sHeight = height;
-            if (width > height) {
-                targetHeight = targetHeight * (height / width) * targetAspect;
-            }
-            else { 
-                targetWidth = targetWidth * (width / height) / targetAspect;
-            }
-        }
-        else if (width <= targetWidth && height <= targetHeight ) {
-            sx = 0;
-            sy = 0;
-            sWidth = targetWidth = width;
-            sHeight = targetHeight = height;
-        }
-        else if (width <= targetWidth && height > targetHeight) {
-            sx = 0;
-            sWidth = targetWidth = width / scaleFactor;
-            sy = height / 2 - targetHeight / 2;
-            sHeight = targetHeight;
-        }
-        else if (width > targetWidth && height <= targetHeight) {
-            sy = 0;
-            sHeight = targetHeight = height / scaleFactor;
-            sx = width / 2 - width / 2;
-            sx = targetWidth;
-        }
-        
+
         var resized = new canvas(targetWidth, targetHeight);
         var context = resized.getContext('2d');
-        try {
-            context.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
-        catch(e) {
-            // We do nothing on exceptions for now, except print em
-            console.log(e);
-        }
+        
+        context.drawImage(
+            image, 
+            offsetCol, offsetRow, // source offset
+            croppedWidth, croppedHeight,  // source size
+            0, 0, // target offset
+            (targetWidth < croppedWidth ? targetWidth : croppedWidth), // target width
+            (targetHeight < croppedHeight ? targetHeight : croppedHeight)); // target height
         
         return resized;
     }  
@@ -92,11 +64,11 @@
     var FULL_HEIGHT = 667;
                          
     function generateThumb(image) {
-        return resize(image, THUMB_WIDTH, THUMB_HEIGHT);
+        return resize(image, THUMB_WIDTH, THUMB_HEIGHT, true);
     }
 
     function generateNormalSizedImage(image) {        
-        return resize(image, FULL_WIDTH, FULL_HEIGHT, true);
+        return resize(image, FULL_WIDTH, FULL_HEIGHT);
     }
     
     function sendMessageIfNecessary(channel, url, thumburl, normalurl) {
