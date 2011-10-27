@@ -130,20 +130,31 @@
         var that = this;
         var start = new Date();
         
-        var whenResized = function(original, thumb, full) {
+        var whenResized = function(original, thumb, full, thumbWidth, thumbHeight, fullWidth, fullHeight) {
           var end = new Date();
           console.log("Resizing/storing took: " + (end-start));
           var info = that.pictures[albumId][pictureId];
           info.thumb = thumb;
           info.full = full;
           info.original = original;
+          info.sizes = {
+            thumb: {
+              width: thumbWidth,
+              height: thumbHeight
+            },
+            full: {
+              width: fullWidth,
+              height: fullHeight
+            }
+          };
           
           that.pictures[albumId][pictureId] = info;
           callback({
             id: pictureId, 
             thumb: thumb, 
             full: full,
-            original: original
+            original: original,
+            sizes: info.sizes
           });
         }
         

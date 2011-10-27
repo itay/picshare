@@ -64,16 +64,19 @@
     var FULL_HEIGHT = 667;
                          
     function generateThumb(image) {
-        return resize(image, THUMB_WIDTH, THUMB_HEIGHT, true);
+        var canvas = resize(image, THUMB_WIDTH, THUMB_HEIGHT, true);
+        return canvas;
     }
 
     function generateNormalSizedImage(image) {        
-        return resize(image, FULL_WIDTH, FULL_HEIGHT);
+        var canvas =  resize(image, FULL_WIDTH, FULL_HEIGHT);
+        return canvas;
     }
     
-    function sendMessageIfNecessary(channel, url, thumburl, normalurl) {
+    function sendMessageIfNecessary(channel, url, thumburl, normalurl, thumb, normal) {
         if (url && thumburl && normalurl) {
-            sendingClient.publish('done:' + channel, url + '^' + thumburl + '^' + normalurl);
+            var result = url + '^' + thumburl + '^' + normalurl + "^" + thumb.width + "^" + thumb.height + "^" + normal.width + "^" + normal.height;
+            sendingClient.publish('done:' + channel, result);
         }
     }
 
@@ -111,7 +114,7 @@
                        url = '';
                        console.log('error %d', req.statusCode);
                    }
-                   sendMessageIfNecessary(channel, url, thumburl, normalurl);
+                   sendMessageIfNecessary(channel, url, thumburl, normalurl, thumb, normalSize);
               });
         req.end(buffer);
         var stream2 = fs.createWriteStream('thumb:'+channel+extension);
@@ -129,7 +132,7 @@
                            thumburl = '';
                            console.log('error %d', req.statusCode);
                        }
-                       sendMessageIfNecessary(channel, url, thumburl, normalurl);
+                       sendMessageIfNecessary(channel, url, thumburl, normalurl, thumb, normalSize);
                   });
             req.end(buf);
             stream2.once('open', function(fd) {stream2.write(buf);});
@@ -149,7 +152,7 @@
                            console.log('error %d', req.statusCode);
                            normalurl = '';
                        }
-                       sendMessageIfNecessary(channel, url, thumburl, normalurl);
+                       sendMessageIfNecessary(channel, url, thumburl, normalurl, thumb, normalSize);
                   });
             req.end(buf);
             stream3.once('open', function(fd) {stream3.write(buf);});
