@@ -444,20 +444,25 @@ body {
   display: none;
 }   
 
-.rs-carousel-action-prev:hover,
+@carouselActionWidth: 36px;
+@carouselActionHeight: 36px;
+
 .rs-carousel-action-next:hover {
-  background-position: 0 0;
+  background-position: -@carouselActionWidth -@carouselActionHeight;
+}
+.rs-carousel-action-prev:hover {
+  background-position: 0px -@carouselActionHeight;
 }
 
 .rs-carousel-action-next {
   position: absolute;
-  top: (@thumbBarHeight / 2 - 30 / 2);
+  top: (@thumbBarHeight / 2 - 36 / 2);
   right: 10px;
   z-index: 100;
-  width: 30px;
-  height: 30px;
+  width: @carouselActionWidth;
+  height: @carouselActionHeight;
   text-indent: -999999px;
-  background: url(/images/gray_next.png) no-repeat 0 -30px;
+  background: url(/images/nav.png) no-repeat -36px 0px;
   cursor: pointer;
   font-size: 0px;
 }
@@ -467,10 +472,10 @@ body {
   top: (@thumbBarHeight / 2 - 30 / 2);
   left: 10px;
   z-index: 100;
-  width: 30px;
-  height: 30px;
+  width: @carouselActionWidth;
+  height: @carouselActionHeight;
   text-indent: -999999px;
-  background: url(/images/gray_prev.png) no-repeat 0 -30px;
+  background: url(/images/nav.png) no-repeat 0 0px;
   cursor: pointer;
   font-size: 0px;
 }
