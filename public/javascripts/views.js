@@ -202,6 +202,11 @@
         src: this.picture.get("full")
       }));
       
+      this.$("img").hide();
+      this.$("img").bind('load', function() {
+        $(this).fadeIn('slow');
+      });
+      
       return this;
     }
   });
@@ -413,6 +418,11 @@
         that.$("div.thumb-container").empty();
         that.$("div.thumb-container").append(thumbElement);
         that.$("div.thumb-container").removeClass("hidden");
+        
+        $(thumbElement).hide();
+        $(thumbElement).bind('load', function() {
+          $(thumbElement).fadeIn('slow');
+        });
       }
       
       if (that.picture.get("thumb")) {
