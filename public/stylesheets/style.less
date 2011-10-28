@@ -99,18 +99,8 @@ body {
     padding-top: 10px;
     margin-top: 10px;
   
-  
-    // Styles for full size image
-    .full-size-image {
-      width: 100%; 
+    #picture-image-container {
       position: relative;
-        
-      img {
-        display: block;
-        max-height: 614px;
-        max-width: 920px;
-        margin: 1px auto;
-      }
       
       .action-button {
         position: absolute;
@@ -134,6 +124,20 @@ body {
       .action-button-prev {
         left: -@actionButtonMargin - @actionButtonWidth;
         background: url(/images/action-prev.png) no-repeat 0 0;
+      }
+    }
+  
+    // Styles for full size image
+    .full-size-image {
+      width: 100%; 
+      position: relative;
+      margin: 1px auto;
+        
+      img {
+        display: block;
+        max-height: 614px;
+        max-width: 920px;
+        margin: 1px auto;
       }
     }
     

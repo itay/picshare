@@ -45,15 +45,15 @@
     </script>
     
     <script id="pictureImageTemplate" type="text/x-jquery-tmpl">
-      
       <img src="${src}"/>
-      <span class="action-button action-button-prev"></span>
-      <span class="action-button action-button-next"></span>
     </script>
     
     <script id="pictureViewTemplate" type="text/x-jquery-tmpl">
       <div class="row">
-        <div class="span16" id="picture-image-container"></div>
+        <div class="span16" id="picture-image-container">
+          <span class="action-button action-button-prev"></span>
+          <span class="action-button action-button-next"></span>
+        </div>
       </div>
       <div class="row" id="picture-extra">
         <div class="span8" id="picture-comments-container"></div>

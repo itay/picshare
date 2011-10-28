@@ -128,24 +128,33 @@
     template: templates.comments,
     
     initialize: function() {
-      this.picture = this.options.picture;
-      this.newCommentFormView = new NewCommentFormView({picture: this.picture});
+      this.newCommentFormView = new NewCommentFormView();
       
-      _.bindAll(this, "destroy", "render", "renderForm", "renderComments");
-      
-      this.picture.comments.bind("add", this.renderComments);
-      this.picture.comments.bind("change", this.renderComments);
-      this.picture.comments.bind("remove", this.renderComments);
-      this.picture.comments.bind("reset", this.renderComments);
+      _.bindAll(this, "destroy", "render", "renderForm", "renderComments", "hook", "unhook", "setPicture");
     },
     
     destroy: function() {
       this.remove();
       this.newCommentFormView.destroy();
-      this.picture.comments.unbind("add", this.renderComments);
-      this.picture.comments.unbind("change", this.renderComments);
-      this.picture.comments.unbind("remove", this.renderComments);
-      this.picture.comments.unbind("reset", this.renderComments);
+      this.unhook();
+    },
+    
+    hook: function() {
+      if (this.picture) {
+        this.picture.comments.bind("add", this.renderComments);
+        this.picture.comments.bind("change", this.renderComments);
+        this.picture.comments.bind("remove", this.renderComments);
+        this.picture.comments.bind("reset", this.renderComments);
+      }
+    },
+    
+    unhook: function() {
+      if (this.picture) {
+        this.picture.comments.unbind("add", this.renderComments);
+        this.picture.comments.unbind("change", this.renderComments);
+        this.picture.comments.unbind("remove", this.renderComments);
+        this.picture.comments.unbind("reset", this.renderComments);
+      }
     },
     
     render: function() {
@@ -153,8 +162,10 @@
       
       $(this.el).html(this.template.tmpl());
       
-      this.renderForm();
-      this.renderComments();
+      if (this.picture) {
+        this.renderForm();
+        this.renderComments();
+      }
       
       return this;
     },
@@ -175,6 +186,16 @@
       });
       
       container.append(els);
+    },
+    
+    setPicture: function(picture) {
+      this.unhook();
+      
+      this.picture = picture;
+      this.newCommentFormView.picture = picture;
+      this.render();
+      
+      this.hook();
     }
   });
   
@@ -184,30 +205,56 @@
     template: templates.pictureImage,
     
     initialize: function() {
-      this.picture = this.options.picture;
-      _.bindAll(this, "destroy", "render");
-      
-      this.picture.bind("change", this.render);
+      _.bindAll(this, "destroy", "render", "hook", "unhook", "setPicture");
     },
     
     destroy: function() {
       this.remove();
-      this.picture.unbind("change", this.render);
+      this.unhook();
+    },
+    
+    hook: function() {
+      if (this.picture) {
+        this.picture.bind("change", this.render);
+      }
+    },
+    
+    unhook: function() {
+      if (this.picture) {
+        this.picture.unbind("change", this.render);
+      }
     },
     
     render: function() {
       $(this.el).empty();
       
-      $(this.el).html(this.template.tmpl({
-        src: this.picture.get("full")
-      }));
-      
-      this.$("img").hide();
-      this.$("img").bind('load', function() {
-        $(this).fadeIn('slow');
-      });
+      $(this.el).html(this.template.tmpl());
       
       return this;
+    },
+    
+    setPicture: function(picture) {
+      // If there is no picture or the new picture is different than the old picture
+      if (!this.picture || (this.picture && picture.cid !== this.picture.cid)) {
+        this.picture = picture;
+        
+        var that = this;
+        that.$("img").hide();
+        that.$("img").attr("src", "");
+        $(this.el).animate(
+          {
+            height: picture.get("sizes").full.height
+          }, 
+          150, // speed
+          null, // easing function (default)
+          function() { // on complete
+            that.$("img").attr("src", that.picture.get("full"));
+            that.$("img").bind('load', function() {
+              that.$("img").fadeIn('fast');
+            });
+          }
+        );
+      }
     }
   });
   
@@ -218,15 +265,25 @@
     template: templates.pictureInfo,
     
     initialize: function() {
-      this.picture = this.options.picture;
-      
-      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture");
-      this.picture.bind("change", this.updateDescription);
+      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture", "hook", "unhook", "setPicture");
+
     },
     
     destroy: function() {
       this.remove();
-      this.picture.unbind("change", this.updateDescription);
+      this.unhook();
+    },
+    
+    hook: function() {
+      if (this.picture) {
+        this.picture.bind("change", this.updateDescription);
+      }
+    },
+    
+    unhook: function() {
+      if (this.picture) {
+        this.picture.unbind("change", this.updateDescription);
+      }
     },
     
     events: {
@@ -237,12 +294,12 @@
     descriptionChange: function(e) {
       e.preventDefault();
     
-      var oldDescription = (this.picture.get("description") || "").trim();
+      var oldDescription = ((this.picture && this.picture.get("description")) || "").trim();
       var newDescription = ($(e.target).val() || "").trim();
       if (newDescription === oldDescription) {
         return;
       }
-       
+      
       this.picture.save({description: newDescription});
     },
     
@@ -259,16 +316,29 @@
     render: function() {
       $(this.el).empty();
       
-      $(this.el).html(this.template.tmpl(this.picture.toJSON()));
+      $(this.el).html(this.template.tmpl());      $(this.el).blur();
       var that = this;
-      setTimeout(function() {
+      _.defer(function() {
         that.$("#picture-description").autoResize({
           extraSpace: 0
         });
-      }, 0);
+      });
+      
+      if (this.picture) {
+        this.updateDescription();
+      }
       
       return this;
     },
+    
+    setPicture: function(picture) {
+      this.unhook();
+      
+      this.picture = picture;
+      this.updateDescription();
+      
+      this.hook();
+    }
   })
   
   PictureView = Backbone.View.extend({
@@ -277,13 +347,18 @@
     template: templates.pictureView,
     
     initialize: function() {
-      this.picture = this.options.picture;
-      this.pictureImageView = new PictureImageView({picture: this.picture});
-      this.commentsView = new CommentsView({picture: this.picture});
-      this.pictureInfoView = new PictureInfoView({picture: this.picture});
+      this.pictureImageView = new PictureImageView();
+      this.commentsView     = new CommentsView();
+      this.pictureInfoView  = new PictureInfoView();
       
-      _.bindAll(this, "destroy", "render");
+      _.bindAll(this, "destroy", "render", "setPicture");
       
+    },
+    
+    setPicture: function(picture) {
+      this.pictureImageView.setPicture(picture);
+      this.commentsView.setPicture(picture);
+      this.pictureInfoView.setPicture(picture);
     },
     
     destroy: function() {
@@ -421,7 +496,7 @@
         
         $(thumbElement).hide();
         $(thumbElement).bind('load', function() {
-          $(thumbElement).fadeIn('slow');
+            $(thumbElement).fadeIn('fast');
         });
       }
       
@@ -445,15 +520,12 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del", "resize");
+      _.bindAll(this, "destroy", "render", "add", "del", "reset", "resize", "addToCarousel", "removeFromCarousel");
       
       $(window).bind('resize', this.resize);
-      
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
-      // You might think we need to bind to the reset event of the album,
-      // but in reality, that is going to cause the entire album to re-render,
-      // which will re-render us anyway.
+      this.album.bind("reset", this.reset);
       
       this.thumbViews = {};
     },
@@ -464,6 +536,7 @@
       $(window).unbind('resize', this.resize);
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
+      this.album.unbind("reset", this.reset);
     },
     
     resize: function() {
@@ -476,6 +549,7 @@
     },
     
     add: function(pictures) {
+      var views = [];
       var that = this;
       _.each(pictures, function(picture) {
         var view = new ThumbView({picture: picture, thumbsView: that});
@@ -486,11 +560,10 @@
         }
         
         that.thumbViews[picture.cid] = view.render();
-        
-        _.defer(function() {
-          $(that.el).carousel('add', $(view.el));
-        });
+        views.push(view);
       });
+      
+      this.addToCarousel(views);
     },
     
     del: function(picture) {
@@ -498,10 +571,39 @@
       delete this.thumbViews[picture.cid];
       
       var that = this;
+      this.removeFromCarousel([picture], true);
+    },
+    
+    reset: function(pictures) {
+      this.removeFromCarousel(this.thumbViews, true);
+      this.thumbViews = {};
       
+      var that = this;
+      this.album.pictures.each(function(picture) {
+        var view = new ThumbView({picture: picture, thumbsView: that});
+        that.thumbViews[picture.cid] = view.render();
+      });
+      
+      this.addToCarousel(this.thumbViews);
+    },
+    
+    addToCarousel: function(thumbViews) {
+      var that = this;
       _.defer(function() {
-        $(that.el).carousel('remove', $(view.el));
-        view.destroy();
+        $(that.el).carousel('add', _.pluck(thumbViews, 'el'));
+      });
+    },
+    
+    removeFromCarousel: function(thumbViews, remove) {
+      var that = this;
+      _.defer(function() {
+        $(that.el).carousel('remove', _.pluck(thumbViews, 'el'));
+        
+        if (remove) {
+          _.each(thumbViews, function(view) {
+            view.destroy();
+          });
+        }
       });
     },
     
@@ -509,38 +611,17 @@
       $(this.el).empty();
       $(this.el).html(this.template.tmpl());
       
-      _.each(this.thumbViews, function(thumbView) {
-        thumbView.destroy();
-      });
-      
-      var that = this;
-      var els = [];
-      this.album.pictures.each(function(picture) {
-        var view = new ThumbView({picture: picture, thumbsView: that});
-        els.push(view.render().el);
-        
-        that.thumbViews[picture.cid] = view;
-      });
-      
       var that = this;
       _.defer(function() {
         $(that.el).carousel({
           pagination: false,
           create_: function() {
-            _.each(that.thumbViews, function(thumbView) {
-              $(that.el).carousel('add', $(thumbView.el));
-            });
             that.carouselInitialized = true;
           }
         });
-        
       });
       
       return this;
-    },
-    
-    createCarousel: function() {
-      
     },
   });
   
@@ -557,6 +638,7 @@
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
+      this.pictureView = new PictureView();
       this.previousPictureIndex = 0;
       this.album.bind("change", this.updateTitle);
       this.album.bind("change", this.updateActions);
@@ -633,9 +715,7 @@
     },
     
     reset: function() {
-      var picture = this.currentPicture = this.album.pictures.at(0);
-      this.render();
-      App.events.trigger("picture:selected", picture, false);
+      this.updateRender();
     },
     
     stopEditAlbumTitle: function(e) {
@@ -673,11 +753,15 @@
       $(this.el).empty();
       
       $(this.el).html(this.template.tmpl());
+      this.$("#thumbs-container").html(this.thumbsView.render().el);
+      this.$("#full-size").html(this.pictureView.render().el);
       
+      return this.updateRender();
+    },
+    
+    updateRender: function() {
       this.updateTitle();
       this.updateActions();
-      this.$("#thumbs-container").append(this.thumbsView.render().el);
-      
       this.renderCurrentPicture();
       
       if (this.album.pictures.length === 0) {
@@ -700,28 +784,11 @@
       }
       
       if (this.currentPicture) {
+        // Store the picture before us in the index
         this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
         
-        // TODO: this caching is probably unnecessary, but we'll leave it in
-        // for now.
-        var oldPictureView = this.pictureView;
-        var pictureView = null;
-        if (this.currentPicture.fullView) {
-          pictureView = this.currentPicture.fullView;
-        }
-        else {
-          pictureView = new PictureView({picture: this.currentPicture});
-          pictureView.render();
-        }
-        
-        this.pictureView = this.currentPicture.fullView = pictureView;
-        this.$("#full-size").append(this.pictureView.el);
-        
+        this.pictureView.setPicture(this.currentPicture);
         this.updateActionButtons();
-        
-        if (oldPictureView) {
-          $(oldPictureView.el).detach();
-        }
       }
     },
     
@@ -872,7 +939,6 @@
       }
       
       var that = this;
-      console.log("SHOW: ", isDragging, this.isDragging);
       if (isDragging && !this.isDragging) {
         this.isDragging = true;
         $(templates.dropOverlay.tmpl()).appendTo($(document.body))
@@ -888,10 +954,9 @@
               $(that.el).modal("hide"); 
             }
             else {
-              console.log($(that.dropOverlay));
               $(that.dropOverlay).remove();
             }
-          })
+          });
       }
     },
     
@@ -1034,10 +1099,8 @@
     
     viewAlbum: function(aid, pid) {
       var selectPictureIfNecessary = function() {
-        if (pid) {
-          var picture = App.album.pictures.get(pid);
-          App.events.trigger("picture:selected", picture, true);
-        }
+        var picture = pid ? App.album.pictures.get(pid) : App.album.pictures.at(0);
+        App.events.trigger("picture:selected", picture, true);
       };
       
       // Don't re-render the page unless
