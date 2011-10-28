@@ -131,6 +131,7 @@
       this.newCommentFormView = new NewCommentFormView();
       
       _.bindAll(this, "destroy", "render", "renderForm", "renderComments", "hook", "unhook", "setPicture");
+      this.hook();
     },
     
     destroy: function() {
@@ -146,6 +147,8 @@
         this.picture.comments.bind("remove", this.renderComments);
         this.picture.comments.bind("reset", this.renderComments);
       }
+      
+      App.events.bind("picture:selected", this.setPicture);
     },
     
     unhook: function() {
@@ -155,6 +158,8 @@
         this.picture.comments.unbind("remove", this.renderComments);
         this.picture.comments.unbind("reset", this.renderComments);
       }
+      
+      App.events.unbind("picture:selected", this.setPicture);
     },
     
     render: function() {
@@ -206,6 +211,7 @@
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "hook", "unhook", "setPicture");
+      this.hook();
     },
     
     destroy: function() {
@@ -217,12 +223,16 @@
       if (this.picture) {
         this.picture.bind("change", this.render);
       }
+      
+      App.events.bind("picture:selected", this.setPicture);
     },
     
     unhook: function() {
       if (this.picture) {
         this.picture.unbind("change", this.render);
       }
+      
+      App.events.unbind("picture:selected", this.setPicture);
     },
     
     render: function() {
@@ -266,7 +276,7 @@
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture", "hook", "unhook", "setPicture");
-
+      this.hook();
     },
     
     destroy: function() {
@@ -278,12 +288,14 @@
       if (this.picture) {
         this.picture.bind("change", this.updateDescription);
       }
+      App.events.unbind("picture:selected", this.setPicture);
     },
     
     unhook: function() {
       if (this.picture) {
         this.picture.unbind("change", this.updateDescription);
       }
+      App.events.unbind("picture:selected", this.setPicture);
     },
     
     events: {
@@ -351,14 +363,7 @@
       this.commentsView     = new CommentsView();
       this.pictureInfoView  = new PictureInfoView();
       
-      _.bindAll(this, "destroy", "render", "setPicture");
-      
-    },
-    
-    setPicture: function(picture) {
-      this.pictureImageView.setPicture(picture);
-      this.commentsView.setPicture(picture);
-      this.pictureInfoView.setPicture(picture);
+      _.bindAll(this, "destroy", "render");
     },
     
     destroy: function() {
@@ -786,8 +791,6 @@
       if (this.currentPicture) {
         // Store the picture before us in the index
         this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
-        
-        this.pictureView.setPicture(this.currentPicture);
         this.updateActionButtons();
       }
     },
