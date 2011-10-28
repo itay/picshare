@@ -130,7 +130,7 @@
     initialize: function() {
       this.newCommentFormView = new NewCommentFormView();
       
-      _.bindAll(this, "destroy", "render", "renderForm", "renderComments", "hook", "unhook", "setPicture");
+      _.bindAll(this, "destroy", "render", "renderForm", "renderComments", "hook", "unhook", "pictureSelected");
       this.hook();
     },
     
@@ -148,7 +148,7 @@
         this.picture.comments.bind("reset", this.renderComments);
       }
       
-      App.events.bind("picture:selected", this.setPicture);
+      App.events.bind("picture:selected", this.pictureSelected);
     },
     
     unhook: function() {
@@ -159,7 +159,7 @@
         this.picture.comments.unbind("reset", this.renderComments);
       }
       
-      App.events.unbind("picture:selected", this.setPicture);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     render: function() {
@@ -193,7 +193,7 @@
       container.append(els);
     },
     
-    setPicture: function(picture) {
+    pictureSelected: function(picture) {
       this.unhook();
       
       this.picture = picture;
@@ -210,7 +210,7 @@
     template: templates.pictureImage,
     
     initialize: function() {
-      _.bindAll(this, "destroy", "render", "hook", "unhook", "setPicture");
+      _.bindAll(this, "destroy", "render", "hook", "unhook", "pictureSelected");
       this.hook();
     },
     
@@ -224,7 +224,7 @@
         this.picture.bind("change", this.render);
       }
       
-      App.events.bind("picture:selected", this.setPicture);
+      App.events.bind("picture:selected", this.pictureSelected);
     },
     
     unhook: function() {
@@ -232,7 +232,7 @@
         this.picture.unbind("change", this.render);
       }
       
-      App.events.unbind("picture:selected", this.setPicture);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     render: function() {
@@ -243,7 +243,7 @@
       return this;
     },
     
-    setPicture: function(picture) {
+    pictureSelected: function(picture) {
       // If there is no picture or the new picture is different than the old picture
       if (!this.picture || (this.picture && picture.cid !== this.picture.cid)) {
         this.picture = picture;
@@ -275,7 +275,7 @@
     template: templates.pictureInfo,
     
     initialize: function() {
-      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture", "hook", "unhook", "setPicture");
+      _.bindAll(this, "destroy", "render", "descriptionChange", "updateDescription", "deletePicture", "hook", "unhook", "pictureSelected");
       this.hook();
     },
     
@@ -288,14 +288,14 @@
       if (this.picture) {
         this.picture.bind("change", this.updateDescription);
       }
-      App.events.unbind("picture:selected", this.setPicture);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     unhook: function() {
       if (this.picture) {
         this.picture.unbind("change", this.updateDescription);
       }
-      App.events.unbind("picture:selected", this.setPicture);
+      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     events: {
@@ -343,7 +343,7 @@
       return this;
     },
     
-    setPicture: function(picture) {
+    pictureSelected: function(picture) {
       this.unhook();
       
       this.picture = picture;
@@ -393,7 +393,7 @@
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount",
-                      "uploadProgress", "uploadDone", "uploadFail", "thumbClicked", "pictureSelected");
+                      "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
       
       this.template = templates.thumb;
       this.picture = this.options.picture;
@@ -407,7 +407,6 @@
       this.picture.comments.bind("add", this.updateCommentCount);
       this.picture.comments.bind("remove", this.updateCommentCount);
       this.picture.comments.bind("reset", this.updateCommentCount);
-      App.events.bind("picture:selected", this.pictureSelected);
       
     },
     
@@ -421,7 +420,6 @@
       this.picture.comments.unbind("add", this.updateCommentCount);
       this.picture.comments.unbind("remove", this.updateCommentCount);
       this.picture.comments.unbind("reset", this.updateCommentCount);
-      App.events.unbind("picture:selected", this.pictureSelected);
     },
     
     events: {
@@ -455,20 +453,6 @@
     thumbClicked: function(e) {
       e.preventDefault();
       App.navigate(this.picture.url(), true);
-    },
-    
-    pictureSelected: function(picture) {
-      var that = this;
-      if (this.picture.cid === picture.cid) {
-        $(this.el).addClass("thumb-selected");
-        
-        _.defer(function() {
-          $(that.thumbsView.el).carousel('goToItem', $(that.el), true);
-        });
-      }
-      else {
-        $(this.el).removeClass("thumb-selected");
-      }
     },
     
     updateCommentCount: function() {
@@ -525,9 +509,10 @@
     initialize: function() {
       this.album = this.options.album;
       
-      _.bindAll(this, "destroy", "render", "add", "del", "reset", "resize", "addToCarousel", "removeFromCarousel");
+      _.bindAll(this, "destroy", "render", "add", "del", "reset", "resize", "addToCarousel", "removeFromCarousel", "pictureSelected");
       
       $(window).bind('resize', this.resize);
+      App.events.bind("picture:selected", this.pictureSelected);
       this.album.bind("add", this.add);
       this.album.bind("remove", this.del);
       this.album.bind("reset", this.reset);
@@ -539,6 +524,7 @@
       this.remove();
       
       $(window).unbind('resize', this.resize);
+      App.events.unbind("picture:selected", this.pictureSelected);
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
       this.album.unbind("reset", this.reset);
@@ -551,6 +537,22 @@
           $(that.el).carousel('refresh');
         });
       }
+    },
+    
+    pictureSelected: function(picture) {
+      var that = this;
+      
+      // Remove the selection from the old thumbs
+      _.each(this.thumbViews, function(thumbView) {
+        $(thumbView.el).removeClass("thumb-selected");
+      });
+      
+      // Add it to the new one
+      var thumbView = this.thumbViews[picture.cid];
+      $(thumbView.el).addClass("thumb-selected");
+      
+      // Scroll to it
+      $(that.el).carousel('goToItem', $(thumbView.el), true);
     },
     
     add: function(pictures) {
