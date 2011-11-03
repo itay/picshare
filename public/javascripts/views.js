@@ -379,7 +379,7 @@
       $(this.el).hide();
       this.hook();
     }
-  })
+  });
   
   PictureView = Backbone.View.extend({
     tagName: "div",
@@ -798,6 +798,7 @@
       this.updateTitle();
       this.updateActions();
       this.renderCurrentPicture(picture);
+      this.updateActionButtons();
       
       if (this.album.pictures.length === 0) {
         this.hide();
@@ -823,7 +824,6 @@
       
       // Store the picture before us in the index
       this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
-      this.updateActionButtons();
     },
     
     updateActionButtons: function() {
