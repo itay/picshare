@@ -196,9 +196,19 @@
     pictureSelected: function(picture) {
       this.unhook();
       
-      this.picture = picture;
-      this.newCommentFormView.picture = picture;
+      $(this.el).show();
+      this.picture = this.newCommentFormView.picture = picture;
       this.render();
+      
+      this.hook();
+    },
+    
+    clear: function() {
+      this.unhook();
+      
+      this.picture = this.newCommentFormView.picture = null;
+      this.render();
+      $(this.el).hide();
       
       this.hook();
     }
@@ -246,7 +256,9 @@
     pictureSelected: function(picture) {
       // If there is no picture or the new picture is different than the old picture
       if (!this.picture || (this.picture && picture.cid !== this.picture.cid)) {
+        this.unhook();
         this.picture = picture;
+        this.hook();
         
         var that = this;
         that.$("img").hide();
@@ -265,6 +277,13 @@
           }
         );
       }
+    },
+    
+    clear: function() {
+      this.unhook();
+      this.picture = null;
+      this.render();
+      this.hook();
     }
   });
   
@@ -288,7 +307,7 @@
       if (this.picture) {
         this.picture.bind("change", this.updateDescription);
       }
-      App.events.unbind("picture:selected", this.pictureSelected);
+      App.events.bind("picture:selected", this.pictureSelected);
     },
     
     unhook: function() {
@@ -316,7 +335,7 @@
     },
     
     updateDescription: function() {
-      this.$("#picture-description").val(this.picture.get("description"));
+      this.$("#picture-description").val(this.picture ? this.picture.get("description") : "");
     },
     
     deletePicture: function(e) {
@@ -346,9 +365,18 @@
     pictureSelected: function(picture) {
       this.unhook();
       
+      $(this.el).show();
       this.picture = picture;
       this.updateDescription();
       
+      this.hook();
+    },
+    
+    clear: function() {
+      this.unhook();
+      this.picture = null;
+      this.updateDescription();
+      $(this.el).hide();
       this.hook();
     }
   })
@@ -382,6 +410,12 @@
       this.$("#picture-info-container").append(this.pictureInfoView.render().el);
    
       return this;
+    },
+    
+    clear: function() {
+      this.pictureImageView.clear();
+      this.commentsView.clear();
+      this.pictureInfoView.clear();
     }
   });  
   
@@ -578,7 +612,7 @@
       delete this.thumbViews[picture.cid];
       
       var that = this;
-      this.removeFromCarousel([picture], true);
+      this.removeFromCarousel([view], true);
     },
     
     reset: function(pictures) {
@@ -698,27 +732,21 @@
     
     pictureSelected: function(picture, shouldRender) {
       if (shouldRender) {
-        this.renderCurrentPicture(picture);
+        this.updateRender(picture);
       }
     },
     
     add: function() {
-      this.updateActionButtons();
-      
-      this.show();
+      this.updateRender();
     },
     
-    del: function(deletedPicture) {      
+    del: function(deletedPicture) {
       if (this.currentPicture === deletedPicture) {
-        var picture = this.currentPicture = this.album.pictures.at(this.previousPictureIndex);
-        App.navigate(picture.url(), true);
+        var picture = (this.album.pictures.at(this.previousPictureIndex) || this.album.pictures.at(0));
+        App.navigate(picture ? picture.url() : this.album.url(), true);
       }
       
-      this.updateActionButtons();
-      
-      if (this.album.pictures.length === 0) {
-        this.hide();
-      }
+      this.updateRender();
     },
     
     reset: function() {
@@ -766,10 +794,10 @@
       return this.updateRender();
     },
     
-    updateRender: function() {
+    updateRender: function(picture) {
       this.updateTitle();
       this.updateActions();
-      this.renderCurrentPicture();
+      this.renderCurrentPicture(picture);
       
       if (this.album.pictures.length === 0) {
         this.hide();
@@ -789,12 +817,13 @@
       if (picture) {
         this.currentPicture = picture;
       }
-      
-      if (this.currentPicture) {
-        // Store the picture before us in the index
-        this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
-        this.updateActionButtons();
+      else {
+        return;
       }
+      
+      // Store the picture before us in the index
+      this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
+      this.updateActionButtons();
     },
     
     updateActionButtons: function() {
@@ -829,6 +858,7 @@
     
     hide: function() {
       $(this.el).addClass("hidden");
+      this.pictureView.clear();
     },
     
     show: function() {
@@ -902,7 +932,6 @@
     
     primaryClicked: function(e) {
       e.preventDefault();
-      
       this.options.picture.destroy();
       this.hide();
     },
@@ -996,7 +1025,7 @@
       }
     );
     
-    var executeSave = function() {
+    var executeSave = function(notify) {
       picture.save(null, {
         success: function() {
           // OK, we've saved the data, now we can upload
@@ -1006,9 +1035,12 @@
           data.url = picture.url() + "/data";
           data.submit()
             .success(function(result, textStatus, jqxhr) {
-              console.log("success: " + picture.cid);
               picture.set(result);
               picture.trigger("upload:done");
+              
+              if (notify) {
+                App.events.trigger("picture:selected", picture, true);
+              }
             }).error(function(jqxhr, textStatus, errorThrown) {
               console.log("error: " + picture.cid);
               picture.trigger("upload:fail", textStatus);
@@ -1033,13 +1065,13 @@
       });
       
       album.queue = [];
-      album.queue.push(executeSave);
+      album.queue.push(function() { executeSave(true); });
     }
     else if (album.isNew() && album.isCreating) {
       album.queue.push(executeSave);
     }
     else {
-      executeSave();
+      executeSave(album.pictures.length === 0);
     }
   };
   
