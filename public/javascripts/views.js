@@ -1079,6 +1079,13 @@
           picture.trigger("upload:progress", data);
         }
       });
+      
+      key('left', function() {
+        that.albumView.prevPicture();
+      });
+      key('right', function() {
+        that.albumView.nextPicture();
+      });
     },
     
     routes: {
@@ -1105,7 +1112,10 @@
     viewAlbum: function(aid, pid) {
       var selectPictureIfNecessary = function() {
         var picture = pid ? App.album.pictures.get(pid) : App.album.pictures.at(0);
-        App.events.trigger("picture:selected", picture, true);
+        
+        if (picture) {
+          App.events.trigger("picture:selected", picture, true);
+        }
       };
       
       // Don't re-render the page unless
