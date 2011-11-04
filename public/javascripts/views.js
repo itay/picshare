@@ -128,7 +128,6 @@
     template: templates.comments,
     
     initialize: function() {
-      this.newCommentFormView = new NewCommentFormView();
       
       _.bindAll(this, "destroy", "render", "renderForm", "renderComments", "hook", "unhook", "pictureSelected");
       this.hook();
@@ -136,7 +135,9 @@
     
     destroy: function() {
       this.remove();
-      this.newCommentFormView.destroy();
+      if (this.newCommentForm) {
+        this.newCommentFormView.destroy();
+      }
       this.unhook();
     },
     
@@ -166,6 +167,12 @@
       $(this.el).empty();
       
       $(this.el).html(this.template.tmpl());
+      
+      if (this.newCommentForm) {
+        this.newCommentFormView.destroy();
+      }
+      this.newCommentFormView = new NewCommentFormView();
+      this.newCommentFormView.picture = this.picture;
       
       if (this.picture) {
         this.renderForm();
@@ -197,7 +204,7 @@
       this.unhook();
       
       $(this.el).show();
-      this.picture = this.newCommentFormView.picture = picture;
+      this.picture = picture;
       this.render();
       
       this.hook();
@@ -206,7 +213,7 @@
     clear: function() {
       this.unhook();
       
-      this.picture = this.newCommentFormView.picture = null;
+      this.picture = null;
       this.render();
       $(this.el).hide();
       
@@ -351,7 +358,8 @@
       var that = this;
       _.defer(function() {
         that.$("#picture-description").autoResize({
-          extraSpace: 0
+          extraSpace: 0,
+          minHeight: 50,
         });
       });
       
@@ -719,7 +727,7 @@
       var index = this.album.pictures.indexOf(this.currentPicture) + 1;
       if (index < this.album.pictures.length) {
         var picture = this.album.pictures.at(index);
-        App.events.trigger("picture:selected", picture, true);
+        App.navigate(picture.url(), true);
       }
     },
     
@@ -727,7 +735,7 @@
       var index = this.album.pictures.indexOf(this.currentPicture) - 1;
       if (index >= 0) {
         var picture = this.album.pictures.at(index);
-        App.events.trigger("picture:selected", picture, true);
+        App.navigate(picture.url(), true);
       }
     },
     
@@ -862,13 +870,22 @@
     
     hide: function() {
       this.$(".hero-unit").removeClass("hidden");
+      
       this.$("#thumbs-container").hide();
       this.$("#full-size").hide();
       this.pictureView.clear();
     },
     
     show: function() {
-      this.$("#thumbs-container").show();
+      var thumbContainer = this.$("#thumbs-container:hidden");
+      if (thumbContainer.length) {
+        var thumbBarHeight = thumbContainer.css("height");
+        thumbContainer.show();
+        thumbContainer.css("bottom", "-"+thumbBarHeight);
+        thumbContainer.animate({
+          bottom: 0
+        }, 150);
+      }
       this.$(".hero-unit").addClass("hidden");
     }
   });

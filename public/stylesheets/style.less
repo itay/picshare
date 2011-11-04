@@ -8,10 +8,9 @@
 @backgroundColor: #EDF6F8;
 @highlightColor: darken(@backgroundColor, 60%);
 
-
-
 body {
-  padding-top: @navBarHeight + @albumHeaderHeight + @thumbBarHeight;
+  padding-top: @navBarHeight + @albumHeaderHeight;
+  padding-bottom: @thumbBarHeight;
 }
 
 ////////// Utility Classes //////////
@@ -105,8 +104,7 @@ body {
     @totalWidth: 940px;
     
     background: @backgroundColor;
-    padding-top: 10px;
-    margin-top: 10px;
+    margin-top: 20px;
   
     #picture-image-container {
       position: relative;
@@ -138,30 +136,38 @@ body {
   
     // Styles for full size image
     .full-size-image {
-      width: 100%; 
       position: relative;
-      margin: 1px auto;
+      margin: 0px auto;
+      padding-top: 15px;
+      padding-bottom: 15px;
         
       img {
         display: block;
         max-height: 614px;
         max-width: 920px;
-        margin: 1px auto;
+        margin: 0px auto;
       }
     }
     
-    // Styles for image info
-    .form-stacked {
-      padding-left: 0px;
-    }
-    
-    textarea#picture-description {
-      resize: none;
-      width: 100%;
-      display: block;
-      padding-left: 0px;
-      padding-right: 0px;
-      overflow-y: hidden;
+    #picture-extra {
+      > div {
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+      
+      // Styles for image info
+      .form-stacked {
+        padding-left: 0px;
+      }
+      
+      textarea#picture-description {
+        resize: none;
+        width: 100%;
+        display: block;
+        padding-left: 0px;
+        padding-right: 0px;
+        overflow-y: hidden;
+      }
     }
   } 
 }
@@ -178,6 +184,9 @@ body {
 
 ////////// Album //////////
 
+#album-container {
+}
+
 .album-header {
   @albumHeaderMargin: 5px;
   
@@ -187,7 +196,8 @@ body {
   height: @albumHeaderHeight;
   left: auto;
   right: auto;
-  background: @backgroundColor;
+  background: -webkit-linear-gradient(#fff, #ccc);
+  box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.3);
   z-index: 1000;
   
   input {
@@ -213,6 +223,7 @@ body {
 }
 
 #empty-album {
+  
   p {
     text-align: center;
   }
@@ -230,12 +241,13 @@ body {
   @progressBarHeight: 15px;
   
   position: fixed;
-  top: @navBarHeight + @albumHeaderHeight;
+  bottom: 0px;
   height: @thumbBarHeight;
   left: auto;
   right: auto;
   width: 100%;
-  background: @backgroundColor;
+  background: -webkit-linear-gradient(#fff, #ccc);
+  box-shadow: 0 -6px 10px 0 rgba(0, 0, 0, 0.3);
   z-index: 1000;
   overflow-x: auto;
   overflow-y: hidden;
