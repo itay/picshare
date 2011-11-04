@@ -472,7 +472,6 @@
     uploadProgress: function(data) {
       console.log("Picture " + this.picture.get("id") + ": " + (data.loaded / data.total));
       var percentage = (data.loaded / data.total) * 100;
-      var percentageText = parseInt(percentage, 10) + "%";
       
       this.$(".pgbar").progressbar({value: percentage});
       this.$(".pgbar").removeClass("hidden");
@@ -1130,6 +1129,13 @@
           
           that.uploadView.hide();
           savePicture(that.album, data.files[0], data);
+        },
+        send: function(e, data) {
+          var picture = data.picture;
+          picture.trigger("upload:progress", {
+            loaded: 0,
+            total: 1
+          });
         },
         drop: function(e, data) {
           that.uploadView.hide();
