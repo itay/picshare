@@ -102,11 +102,14 @@ body {
     @actionButtonHeight: 48px;
     @actionButtonMargin: 10px;
     @totalWidth: 940px;
+    @maxImageHeight: 614px;
+    @imageVerticalPadding: 15px;
     
     background: @backgroundColor;
   
     #picture-image-container {
       position: relative;
+      max-height: @maxImageHeight + 2 * @imageVerticalPadding;
       
       .action-button {
         position: absolute;
@@ -137,13 +140,13 @@ body {
     .full-size-image {
       position: relative;
       margin: 0px auto;
-      padding-top: 15px;
-      padding-bottom: 15px;
+      padding-top: @imageVerticalPadding;
+      padding-bottom: @imageVerticalPadding;
       background: url(/images/loading.gif) no-repeat center center;
         
       img {
         display: block;
-        max-height: 614px;
+        max-height: @maxImageHeight;
         max-width: 920px;
         margin: 0px auto;
       }
