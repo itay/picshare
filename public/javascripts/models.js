@@ -161,10 +161,6 @@
       }
     },
     
-    fetch: function(options) {
-      Backbone.Model.prototype.fetch.apply(this, arguments);
-    },
-    
     add: function(picture) {
       this.trigger("add", [picture]);
     },

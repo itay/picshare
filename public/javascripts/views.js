@@ -434,7 +434,7 @@
     height: 75,
     
     initialize: function() {
-      _.bindAll(this, "destroy", "render", "deleteThumb", "updateCommentCount",
+      _.bindAll(this, "destroy", "render", "updateCommentCount",
                       "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
       
       this.template = templates.thumb;
@@ -466,7 +466,6 @@
     
     events: {
       "click div.thumb-container img": "thumbClicked",
-      "click a.delete": "deleteThumb"
     },
     
     uploadProgress: function(data) {
@@ -485,15 +484,8 @@
       this.$(".progress").addClass("hidden");
     },
     
-    deleteThumb: function(e) {
-      e.preventDefault();
-      var view = new DeletePictureModalView({template: templates.deletePictureModal, picture: this.picture});
-      view.show();
-    },
-    
     thumbClicked: function(e) {
-      e.preventDefault();
-      App.navigate(this.picture.url(), true);
+      // TODO: should we remove this?
     },
     
     updateCommentCount: function() {
@@ -515,13 +507,14 @@
       // Need to make this happen on the next tick, unfortunately.
       var that = this;
       setTimeout(function() {
-        that.$(".pgbar").progressbar({value: 10});
+        that.$(".pgbar").progressbar({value: 0});
       }, 0);
       
       
       var setThumb = function(thumbElement) {
-        that.$("div.thumb-container").empty();
-        that.$("div.thumb-container").append(thumbElement);
+        that.$("div.thumb-container a").empty();
+        that.$("div.thumb-container a").attr("href", "#" + that.picture.url());
+        that.$("div.thumb-container a").append(thumbElement);
         that.$("div.thumb-container").removeClass("hidden");
         
         $(thumbElement).hide();
