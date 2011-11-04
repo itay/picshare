@@ -207,11 +207,11 @@
     },
     
     isFirst: function(picture) {
-      return picture.cid === this.first().cid;
+      return this.first() && picture.cid === this.first().cid;
     },
     
     isLast: function(picture) {
-      return picture.cid === this.last().cid;
+      return this.last() && picture.cid === this.last().cid;
     }
   });
 })();

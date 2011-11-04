@@ -347,7 +347,7 @@
     render: function() {
       $(this.el).empty();
       
-      $(this.el).html(this.template.tmpl());      $(this.el).blur();
+      $(this.el).html(this.template.tmpl());
       var that = this;
       _.defer(function() {
         that.$("#picture-description").autoResize({
@@ -701,6 +701,7 @@
     },
     
     events: {
+      "click #empty-album a.upload": "uploadPictures",
       "click .album-actions a.add": "uploadPictures",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
@@ -777,7 +778,7 @@
     
     getActions: function() {
       if (this.album.isNew()) {
-        return [];
+        return ["Add"];
       }
       else {
         return ["Add", "Share", "Delete"]  
@@ -822,6 +823,9 @@
         return;
       }
       
+      // Show the full size
+      this.$("#full-size").show();
+      
       // Store the picture before us in the index
       this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
     },
@@ -857,12 +861,15 @@
     },
     
     hide: function() {
-      $(this.el).addClass("hidden");
+      this.$(".hero-unit").removeClass("hidden");
+      this.$("#thumbs-container").hide();
+      this.$("#full-size").hide();
       this.pictureView.clear();
     },
     
     show: function() {
-      $(this.el).removeClass("hidden");
+      this.$("#thumbs-container").show();
+      this.$(".hero-unit").addClass("hidden");
     }
   });
   
@@ -1100,6 +1107,10 @@
       $("#file-upload").fileupload({
         namespace: "upload",
         add: function(e, data) {
+          if (!that.album) {
+            App.navigate("/new", true);
+          }
+          
           that.uploadView.hide();
           savePicture(that.album, data.files[0], data);
         },
@@ -1124,6 +1135,7 @@
       "": "index",
       "/": "index",
       "/new": "new",
+      "/new/": "new",
       "/albums/:aid": "viewAlbum",
       "/albums/:aid/": "viewAlbum",
       "/albums/:aid/pictures/:pid": "viewAlbum",
@@ -1131,17 +1143,21 @@
     },
     
     index: function() {
-      this.createAndRenderAlbum({name: "Untitled Album"});
-      
-      this.uploadView.render();
+      this.album = null;
+      this.hideAlbum();
+      this.showHero();
     },
     
     new: function() {
+      this.hideHero();
+      this.showAlbum();
       this.createAndRenderAlbum({name: "Untitled Album"});
       this.uploadView.render();
     },
     
     viewAlbum: function(aid, pid) {
+      this.hideHero();
+      this.showAlbum();
       var selectPictureIfNecessary = function() {
         var picture = pid ? App.album.pictures.get(pid) : App.album.pictures.at(0);
         
@@ -1189,6 +1205,14 @@
       if (this.albumView) {
         $(this.albumView.el).addClass("hidden");
       }
+    },
+    
+    showHero: function() {
+      $(".hero-unit").parent().removeClass("hidden");
+    },
+    
+    hideHero: function() {
+      $("#main-hero.hero-unit").parent().addClass("hidden");
     }
   });
 })();
