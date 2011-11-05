@@ -343,6 +343,7 @@
     
     updateDescription: function() {
       this.$("#picture-description").val(this.picture ? this.picture.get("description") : "");
+      this.$("#picture-description").change();
     },
     
     deletePicture: function(e) {
@@ -359,7 +360,7 @@
       _.defer(function() {
         that.$("#picture-description").autoResize({
           extraSpace: 0,
-          minHeight: 36,
+          minHeight: 36
         });
       });
       
