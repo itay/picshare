@@ -359,7 +359,7 @@
       _.defer(function() {
         that.$("#picture-description").autoResize({
           extraSpace: 0,
-          minHeight: 50,
+          minHeight: 36,
         });
       });
       

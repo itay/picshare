@@ -32,6 +32,13 @@ body {
   border-radius: 6px;
 }
 
+.input-xxxlarge,
+input.xxxlarge,
+textarea.xxxlarge,
+select.xxxlarge {
+  width: 912px;
+}
+
 /////////////////////////////////////
 
 ///////// Transparent Input /////////
@@ -63,14 +70,14 @@ body {
 
 // Comments container
 #picture-comments-container {
+  margin-right: 20px;
   
   // Comment form  
   textarea#picture-comment-text {
     resize: none;
     overflow-y: hidden;
-    width: 99%;
     padding-left: 4px;
-    padding-right: 0px;
+    padding-right: 4px;
   }
   
   // Individual comment style
@@ -109,7 +116,7 @@ body {
   
     #picture-image-container {
       position: relative;
-      max-height: @maxImageHeight + 2 * @imageVerticalPadding;
+      max-height: @maxImageHeight + 1 * @imageVerticalPadding;
       
       .action-button {
         position: absolute;
@@ -141,9 +148,9 @@ body {
       position: relative;
       margin: 0px auto;
       padding-top: @imageVerticalPadding;
-      padding-bottom: @imageVerticalPadding;
+      //padding-bottom: @imageVerticalPadding;
       background: url(/images/loading.gif) no-repeat center center;
-        
+              
       img {
         display: block;
         max-height: @maxImageHeight;
@@ -152,10 +159,25 @@ body {
       }
     }
     
-    #picture-extra {
+    #picture-info-container {
+      margin-right: 20px; 
+      position:relative;
+      z-index: 100;
+      
+      fieldset {
+        margin-bottom: 0px; 
+      }
+    }
+    
+    .picture-extra {
       > div {
         margin-left: 10px;
         margin-right: 10px;
+      }
+      
+      a.delete {
+        margin-right: 20px;
+        margin-top: 4px;
       }
       
       // Styles for image info
@@ -165,7 +187,6 @@ body {
       
       textarea#picture-description {
         resize: none;
-        width: 100%;
         display: block;
         padding-left: 0px;
         padding-right: 0px;

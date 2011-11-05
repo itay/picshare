@@ -25,14 +25,14 @@
       <fieldset>
         <div class="clearfix">
           <div class="input">
-            <input class="large pull-left" id="picture-comment-name" tabindex="1"
+            <input class="xxlarge pull-left" id="picture-comment-name" tabindex="1"
                   name="picture-comment-name" type="text" placeholder="Enter your name">
+            <input type="submit" class="clearfix btn primary pull-right" value="Post Comment" tabindex="3">
           </div>
-          <input type="submit" class="clearfix btn primary pull-right" value="Post Comment" tabindex="3">
         </div>
         <div class="clearfix">
           <div class="input">
-            <textarea class="xxlarge" id="picture-comment-text" tabindex="2"
+            <textarea class="xxxlarge" id="picture-comment-text" tabindex="2"
                       name="picture-comment-text" placeholder="Type your comment here"></textarea>
           </div>
         </div>
@@ -56,10 +56,14 @@
           <span class="action-button action-button-next"></span>
         </div>
       </div>
-      <div class="row" id="picture-extra">
+      <div class="row picture-extra">
         <div>
-          <div class="span8" id="picture-comments-container"></div>
-          <div class="span7" id="picture-info-container"></div>
+          <div class="span16" id="picture-info-container"></div>
+        </div>
+      </div>
+      <div class="row picture-extra">
+        <div>
+          <div class="span16" id="picture-comments-container"></div>
         </div>
       </div>
     </script>
@@ -67,16 +71,15 @@
     <script id="pictureInfoTemplate" type="text/x-jquery-tmpl">
       <fieldset>
         <div class="clearfix">
-          <label for="picture-description">Description</label>
           <div class="input">
-            <textarea  class="xlarge transparent-input" id="picture-description" 
+            <textarea class="xxlarge transparent-input pull-left" id="picture-description" 
                     name="picture-description" type="text"
                     placeholder="Enter a description for this picture.">${description}</textarea>
+            <a href="" class="clearfix delete close pull-right">×</a>
           </div>
         </div>
       </fieldset>
       <div>
-        <a href="" class="delete">Delete Picture</a>
       </div>
     </script>
 
@@ -114,9 +117,8 @@
         <div class="hero-unit hidden" id="empty-album">
           <p><a class="btn primary xxlarge upload" href="">FEED ME!</a></p>
         </div>
-        <div class="row clearfix">
-          <div class="span16" id="full-size">
-          </div>
+        <div id="full-size">
+        
         </div>
       </div>
     </script>
