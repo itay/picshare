@@ -122,11 +122,10 @@ select.xxxlarge {
     @imageVerticalPadding: 10px;
     
     background: @backgroundColor;
-  
-    #picture-image-container {
+      
+    .action-button-container {
+      margin-left: 20px;
       position: relative;
-      max-height: @maxImageHeight + 2 * @imageVerticalPadding;
-      overflow: hidden;
       
       .action-button {
         position: absolute;
@@ -151,6 +150,12 @@ select.xxxlarge {
         left: -@actionButtonMargin - @actionButtonWidth;
         background: url(/images/action-prev.png) no-repeat 0 0;
       }
+    }
+  
+    #picture-image-container {
+      position: relative;
+      max-height: @maxImageHeight + 2 * @imageVerticalPadding;
+      overflow: hidden;
     }
   
     // Styles for full size image
