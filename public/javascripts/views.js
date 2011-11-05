@@ -433,7 +433,7 @@
     className: "rs-carousel-item",
     
     initialize: function() {
-      _.bindAll(this, "destroy", "render", "updateCommentCount",
+      _.bindAll(this, "destroy", "render",
                       "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
       
       this.template = templates.thumb;
@@ -445,9 +445,6 @@
       this.picture.bind("upload:progress", this.uploadProgress);
       this.picture.bind("upload:done", this.uploadDone);
       this.picture.bind("upload:fail", this.uploadFail);
-      this.picture.comments.bind("add", this.updateCommentCount);
-      this.picture.comments.bind("remove", this.updateCommentCount);
-      this.picture.comments.bind("reset", this.updateCommentCount);
       
     },
     
@@ -458,9 +455,6 @@
       this.picture.unbind("upload:progress", this.uploadProgress);
       this.picture.unbind("upload:done", this.uploadDone);
       this.picture.unbind("upload:fail", this.uploadFail);
-      this.picture.comments.unbind("add", this.updateCommentCount);
-      this.picture.comments.unbind("remove", this.updateCommentCount);
-      this.picture.comments.unbind("reset", this.updateCommentCount);
     },
     
     events: {
@@ -485,11 +479,6 @@
     
     thumbClicked: function(e) {
       // TODO: should we remove this?
-    },
-    
-    updateCommentCount: function() {
-      var numComments = this.picture.comments.length;
-      this.$(".thumb-actions .comment-count").text(numComments);
     },
     
     render: function(inChangeEvent) {
@@ -696,7 +685,7 @@
       this.removeFromCarousel([view], true);
     },
     
-    reset: function(pictures) {
+    reset: function() {      
       this.removeFromCarousel(this.thumbViews, true);
       this.thumbViews = {};
       
@@ -707,6 +696,8 @@
       });
       
       this.addToCarousel(this.thumbViews);
+      
+      return this;
     },
     
     addToCarousel: function(thumbViews) {
@@ -743,7 +734,7 @@
         });
       });
       
-      return this;
+      return this.reset();
     },
   });
   
@@ -1231,7 +1222,8 @@
       this.events = _.extend({}, Backbone.Events);
       
       _.bindAll(this, "index", "viewAlbum", "new", 
-                "hideAlbum", "showAlbum", "createAndRenderAlbum");
+                "hideAlbum", "showAlbum", 
+                "createAlbum", "renderAlbum", "createAndRenderAlbum");
       
       // Create views
       this.uploadView = new UploadView();
@@ -1304,6 +1296,8 @@
     },
     
     viewAlbum: function(aid, pid) {
+      var that = this;
+      
       this.hideHero();
       this.showAlbum();
       var selectPictureIfNecessary = function() {
@@ -1325,25 +1319,34 @@
       }
       else {
         this.uploadView.render();
-        this.createAndRenderAlbum({id: aid});
+        
+        this.createAlbum({id: aid});
         this.album.fetch();
         this.album.pictures.fetch({
           success: function() {
+            that.renderAlbum();
             selectPictureIfNecessary();
           }
         });
       }
     },
     
-    createAndRenderAlbum: function(options) {
+    createAlbum: function(options) {
+      this.album = new Album(options);
+    },
+    
+    renderAlbum: function() {
       if (this.albumView) {
         this.albumView.destroy();
       }
       
-      var that = this;
-      this.album = new Album(options);
       this.albumView = new AlbumView({album: this.album});
-      $("#album-container").append(that.albumView.render().el);
+      $("#album-container").append(this.albumView.render().el);
+    },
+    
+    createAndRenderAlbum: function(options) {
+      this.createAlbum(options);
+      this.renderAlbum();
     },
     
     showAlbum: function() {
