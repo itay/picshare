@@ -581,11 +581,21 @@
     },
     
     add: function(pictures) {
-      this.render();
+      var that = this;
+      var views = [];
+      _.each(pictures, function(picture) {
+        var view = new ThumbView({picture: picture, thumbType: "bigThumb"});
+        that.thumbViews[picture.cid] = view.render();
+        views.push(view.el);
+      });
+      
+      $(this.el).append(views);
     },
     
     del: function(picture) {
-      this.render();
+      var view = this.thumbViews[picture.cid];
+      delete this.thumbViews[picture.cid];
+      view.destroy();
     },
     
     reset: function() {
