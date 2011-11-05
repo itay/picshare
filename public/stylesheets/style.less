@@ -110,13 +110,14 @@ select.xxxlarge {
     @actionButtonMargin: 10px;
     @totalWidth: 940px;
     @maxImageHeight: 614px;
-    @imageVerticalPadding: 15px;
+    @imageVerticalPadding: 10px;
     
     background: @backgroundColor;
   
     #picture-image-container {
       position: relative;
-      max-height: @maxImageHeight + 1 * @imageVerticalPadding;
+      max-height: @maxImageHeight + 2 * @imageVerticalPadding;
+      overflow: hidden;
       
       .action-button {
         position: absolute;
@@ -148,8 +149,8 @@ select.xxxlarge {
       position: relative;
       margin: 0px auto;
       padding-top: @imageVerticalPadding;
-      //padding-bottom: @imageVerticalPadding;
-      background: url(/images/loading.gif) no-repeat center center;
+      padding-bottom: @imageVerticalPadding;
+      background: black url(/images/loading.gif) no-repeat center center;
               
       img {
         display: block;
@@ -188,8 +189,8 @@ select.xxxlarge {
       textarea#picture-description {
         resize: none;
         display: block;
-        padding-left: 0px;
-        padding-right: 0px;
+        padding-left: 4px;
+        padding-right: 4px;
         overflow-y: hidden;
       }
     }
