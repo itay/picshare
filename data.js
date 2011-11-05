@@ -14,7 +14,7 @@
       receivingClient.on('pmessage', function(pattern, channel, message) {
         var completed = channel.split(':').slice(1).join(':');
         if (completed in callbackMap) {
-          callbackMap[completed].apply(null, message.split('^'));
+          callbackMap[completed](JSON.parse(message));
           delete callbackMap[completed];
         }
       });
@@ -130,30 +130,42 @@
         var that = this;
         var start = new Date();
         
-        var whenResized = function(original, thumb, full, thumbWidth, thumbHeight, fullWidth, fullHeight) {
+        var whenResized = function(data) {
           var end = new Date();
           console.log("Resizing/storing took: " + (end-start));
           var info = that.pictures[albumId][pictureId];
-          info.thumb = thumb;
-          info.full = full;
-          info.original = original;
+          info.thumb = data.thumb;
+          info.full = data.normal;
+          info.original = data.original;
+          info.bigThumb = data.bigThumb;
           info.sizes = {
             thumb: {
-              width: thumbWidth,
-              height: thumbHeight
+              width: data.sizes.thumb.width,
+              height: data.sizes.thumb.height,
+            },
+            bigThumb: {
+              width: data.sizes.bigThumb.width,
+              height: data.sizes.bigThumb.height,
             },
             full: {
-              width: fullWidth,
-              height: fullHeight
+              width: data.sizes.normal.width,
+              height: data.sizes.normal.height,
+            },
+            original: {
+              width: data.sizes.original.width,
+              height: data.sizes.original.height,
             }
           };
+          
+          console.log(info);
           
           that.pictures[albumId][pictureId] = info;
           callback({
             id: pictureId, 
-            thumb: thumb, 
-            full: full,
-            original: original,
+            thumb: info.thumb, 
+            bigThumb: info.bigThumb,
+            full: info.full,
+            original: info.original,
             sizes: info.sizes
           });
         }
