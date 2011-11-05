@@ -738,7 +738,7 @@
       _.bindAll(this, "destroy", "render", 
         "shareAlbum", "deleteAlbum", "stopEditAlbumTitle", "updateTitle", "updateActions", "pictureSelected",
         "renderCurrentPicture", "add", "reset", "del", "show", "hide", "pictureSelected", "updateActionButtons",
-        "uploadPictures");
+        "uploadPictures", "goToGrid");
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
@@ -767,6 +767,7 @@
     events: {
       "click #empty-album a.upload": "uploadPictures",
       "click .album-actions a.add": "uploadPictures",
+      "click .album-actions a.grid": "goToGrid",
       "click .album-actions a.share": "shareAlbum",
       "click .album-actions a.delete": "deleteAlbum",
       "click .action-button-next": "nextPicture",
@@ -850,10 +851,10 @@
     
     getActions: function() {
       if (this.album.isNew()) {
-        return ["Add"];
+        return ["Add", "Grid"];
       }
       else {
-        return ["Add", "Share", "Delete"]  
+        return ["Add", "Grid", "Share", "Delete"]  
       }
     },
     
@@ -945,6 +946,11 @@
     
     show: function() {
       this.$(".hero-unit").addClass("hidden");
+    },
+    
+    goToGrid: function(e) {
+      e.preventDefault();
+      App.navigate(this.album.url(), true);
     },
     
     showGrid: function() {
