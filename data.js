@@ -157,8 +157,6 @@
             }
           };
           
-          console.log(info);
-          
           that.pictures[albumId][pictureId] = info;
           callback({
             id: pictureId, 
