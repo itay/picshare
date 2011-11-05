@@ -238,7 +238,7 @@
     
     hook: function() {
       if (this.picture) {
-        this.picture.bind("change", this.render);
+        this.picture.bind("change", this.pictureSelected);
       }
       
       App.events.bind("picture:selected", this.pictureSelected);
@@ -246,7 +246,7 @@
     
     unhook: function() {
       if (this.picture) {
-        this.picture.unbind("change", this.render);
+        this.picture.unbind("change", this.pictureSelected);
       }
       
       App.events.unbind("picture:selected", this.pictureSelected);
@@ -491,7 +491,14 @@
       this.$(".thumb-actions .comment-count").text(numComments);
     },
     
-    render: function() {
+    render: function(inChangeEvent) {
+      // If we're re-rendering as part of the picture model changing,
+      // but the thumb URL hasn't actually changed, then we can just
+      // ignore this event, because there's nothing for us to do.
+      if (inChangeEvent && !this.picture.hasChanged(this.thumbType)) {
+        return;
+      }
+      
       $(this.el).empty();
       
       var content = this.template.tmpl({
@@ -505,7 +512,7 @@
       // Need to make this happen on the next tick, unfortunately.
       var that = this;
       setTimeout(function() {
-        that.$(".pgbar").progressbar({value: 10});
+        that.$(".pgbar").progressbar({value: 0});
       }, 0);      
       
       var setThumb = function(thumbElement) {
