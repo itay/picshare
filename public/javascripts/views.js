@@ -430,17 +430,15 @@
   ThumbView = Backbone.View.extend({
     tagName: "li",
     className: "rs-carousel-item",
-    width: 75,
-    height: 75,
     
     initialize: function() {
       _.bindAll(this, "destroy", "render", "updateCommentCount",
                       "uploadProgress", "uploadDone", "uploadFail", "thumbClicked");
       
       this.template = templates.thumb;
+      this.thumbType = this.options.thumbType || "thumb";
       this.picture = this.options.picture;
       this.isEdit = this.options.isEdit;
-      this.thumbsView = this.options.thumbsView;
       
       this.picture.bind("change", this.render);
       this.picture.bind("upload:progress", this.uploadProgress);
@@ -507,9 +505,8 @@
       // Need to make this happen on the next tick, unfortunately.
       var that = this;
       setTimeout(function() {
-        that.$(".pgbar").progressbar({value: 0});
-      }, 0);
-      
+        that.$(".pgbar").progressbar({value: 10});
+      }, 0);      
       
       var setThumb = function(thumbElement) {
         that.$("div.thumb-container a").empty();
@@ -523,14 +520,76 @@
         });
       }
       
-      if (that.picture.get("thumb")) {
+      if (that.picture.get(that.thumbType)) {
         var img = $("<img>");
-        img.prop('src', that.picture.get("thumb"));
+        img.prop('src', that.picture.get(that.thumbType));
         img.prop('id', that.picture.cid)
         setThumb(img);
       }
       
       return this;
+    }
+  });
+  
+  GridView = Backbone.View.extend({
+    tagName: "ul",
+    className: "media-bigthumb-grid",
+    
+    initialize: function() {
+      this.album = this.options.album;
+      
+      _.bindAll(this, "destroy", "render", "add", "del", "reset");
+      
+      this.album.bind("add", this.add);
+      this.album.bind("remove", this.del);
+      this.album.bind("reset", this.reset);
+      
+      this.thumbViews = {};
+    },
+    
+    destroy: function() {
+      this.remove();
+      
+      this.album.unbind("add", this.add);
+      this.album.unbind("remove", this.del);
+      this.album.unbind("reset", this.reset);
+      
+      _.each(_.values(this.thumbViews), function(thumbView) {
+        thumbView.destroy();
+      });
+    },
+    
+    render: function() {
+      $(this.el).empty();
+      
+      _.each(_.values(this.thumbViews), function(thumbView) {
+        thumbView.destroy();
+      });
+      this.thumbViews = {};
+      
+      var that = this;
+      var views = [];
+      this.album.pictures.each(function(picture) {
+        var view = new ThumbView({picture: picture, thumbType: "bigThumb"});
+        that.thumbViews[picture.cid] = view.render();
+        views.push(view.el);
+      });
+      
+      $(this.el).append(views);
+      
+      return this;
+    },
+    
+    add: function(pictures) {
+      this.render();
+    },
+    
+    del: function(picture) {
+      this.render();
+    },
+    
+    reset: function() {
+      this.render(); 
     }
   });
   
@@ -562,6 +621,10 @@
       this.album.unbind("add", this.add);
       this.album.unbind("remove", this.del);
       this.album.unbind("reset", this.reset);
+      
+      _.each(_.values(this.thumbViews), function(thumbView) {
+        thumbView.destroy();
+      });
     },
     
     resize: function() {
@@ -679,6 +742,7 @@
         
       this.album = this.options.album;
       this.thumbsView = new ThumbsView({album: this.album});
+      this.gridView = new GridView({album: this.album});
       this.pictureView = new PictureView();
       this.previousPictureIndex = 0;
       this.album.bind("change", this.updateTitle);
@@ -716,6 +780,10 @@
     },
     
     nextPicture: function() {
+      if (!this.currentPicture) {
+        return;
+      }
+      
       var index = this.album.pictures.indexOf(this.currentPicture) + 1;
       if (index < this.album.pictures.length) {
         var picture = this.album.pictures.at(index);
@@ -724,6 +792,10 @@
     },
     
     prevPicture: function() {
+      if (!this.currentPicture) {
+        return;
+      }
+      
       var index = this.album.pictures.indexOf(this.currentPicture) - 1;
       if (index >= 0) {
         var picture = this.album.pictures.at(index);
@@ -791,6 +863,7 @@
       $(this.el).html(this.template.tmpl());
       this.$("#thumbs-container").html(this.thumbsView.render().el);
       this.$("#full-size").html(this.pictureView.render().el);
+      this.$("#grid-container").html(this.gridView.render().el);
       
       return this.updateRender();
     },
@@ -824,7 +897,9 @@
       }
       
       // Show the full size
-      this.$("#full-size").show();
+      if (this.currentPicture) {
+        this.showStrip();
+      }
       
       // Store the picture before us in the index
       this.previousPictureIndex = Math.max(0, this.album.pictures.indexOf(this.currentPicture) - 1);
@@ -863,12 +938,29 @@
     hide: function() {
       this.$(".hero-unit").removeClass("hidden");
       
-      this.$("#thumbs-container").hide();
-      this.$("#full-size").hide();
+      this.hideStrip();
+      this.hideGrid();
       this.pictureView.clear();
     },
     
     show: function() {
+      this.$(".hero-unit").addClass("hidden");
+    },
+    
+    showGrid: function() {
+      this.hideStrip();
+      
+      this.$("#grid-container").show();
+    },
+    
+    hideGrid: function() {
+      this.$("#grid-container").hide();
+    },
+    
+    showStrip: function() {
+      this.hideGrid();
+      
+      var that = this;
       var thumbContainer = this.$("#thumbs-container:hidden");
       if (thumbContainer.length) {
         var thumbBarHeight = thumbContainer.css("height");
@@ -878,7 +970,16 @@
           bottom: 0
         }, 150);
       }
-      this.$(".hero-unit").addClass("hidden");
+      this.$("#full-size").show();
+      _.defer(function() {
+        that.thumbsView.resize();
+      });
+    },
+    
+    hideStrip: function() {
+      this.currentPicture = null;;
+      this.$("#thumbs-container").hide();
+      this.$("#full-size").hide();
     }
   });
   
@@ -1047,6 +1148,12 @@
           // OK, we've saved the data, now we can upload
           // the actual file
           album.pictures.add(picture);
+          
+          // Re-render the album
+          if (notify) {
+            App.events.trigger("album:hasPictures", album.id);
+          }
+          
           data.picture = picture;
           data.url = picture.url() + "/data";
           data.submit()
@@ -1054,9 +1161,6 @@
               picture.set(result);
               picture.trigger("upload:done");
               
-              if (notify) {
-                App.events.trigger("picture:selected", picture, true);
-              }
             }).error(function(jqxhr, textStatus, errorThrown) {
               console.log("error: " + picture.cid);
               picture.trigger("upload:fail", textStatus);
@@ -1145,6 +1249,8 @@
       key('right', function() {
         that.albumView.nextPicture();
       });
+      
+      App.events.bind("album:hasPictures", this.viewAlbum)
     },
     
     routes: {
@@ -1175,10 +1281,13 @@
       this.hideHero();
       this.showAlbum();
       var selectPictureIfNecessary = function() {
-        var picture = pid ? App.album.pictures.get(pid) : App.album.pictures.at(0);
+        var picture = App.album.pictures.get(pid);
         
         if (picture) {
           App.events.trigger("picture:selected", picture, true);
+        }
+        else {
+          App.albumView.showGrid();
         }
       };
       

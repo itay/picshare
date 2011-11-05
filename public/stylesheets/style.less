@@ -39,6 +39,15 @@ select.xxxlarge {
   width: 912px;
 }
 
+////
+
+  .progress-bar(@progressBarHeight, @thumbHeight) {
+    height: @progressBarHeight;
+    margin-top: @thumbHeight/2 - @progressBarHeight/2;
+  }
+
+///
+
 /////////////////////////////////////
 
 ///////// Transparent Input /////////
@@ -280,8 +289,7 @@ select.xxxlarge {
   overflow-y: hidden;
   
   .pgbar {
-    height: @progressBarHeight;
-    margin-top: (@thumbHeight / 2) - (@progressBarHeight / 2);
+    .progress-bar(@progressBarHeight, @thumbHeight)
   }
 
   ul#thumbs li {
@@ -490,3 +498,65 @@ select.xxxlarge {
   cursor: pointer;
   font-size: 0px;
 }
+
+#grid-container {
+  @thumbWidth: 210px;
+  @thumbHeight: 210px;
+  
+  @progressBarHeight: 15px;
+  
+  .media-bigthumb-grid {
+    margin-left: -20px;
+    margin-bottom: 0;
+    zoom: 1;
+  }
+  
+  .media-bigthumb-grid:before, .media-bigthumb-grid:after {
+    display: table;
+    content: "";
+    zoom: 1;
+    *display: inline;
+  }
+  
+  .media-bigthumb-grid:after {
+    clear: both;
+  }
+  
+  .media-bigthumb-grid li {
+    display: inline
+  }
+  
+  .media-bigthumb-grid li >div {
+    float: left;
+    padding: 4px;
+    margin: 0 0 20px 20px;
+    border: 1px solid #ddd;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+    -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+  }
+  
+  .media-bigthumb-grid a img {
+    display: block;
+  }
+  
+  .media-bigthumb-grid li >div:hover {
+    border-color: #0069d6;
+    -webkit-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+    -moz-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+    box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+  }
+  
+  div.thumb {
+    width: @thumbWidth;
+    height: @thumbHeight;
+  }
+  
+  .pgbar {
+    .progress-bar(@progressBarHeight, @thumbHeight)
+  }
+}
+
