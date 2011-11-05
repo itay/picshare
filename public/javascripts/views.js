@@ -993,11 +993,13 @@
         thumbContainer.animate({
           bottom: 0
         }, 150);
+        
+        // Only need to resize the thumbview if we were previously hidden
+        _.defer(function() {
+          that.thumbsView.resize();
+        });
       }
       this.$("#full-size").show();
-      _.defer(function() {
-        that.thumbsView.resize();
-      });
     },
     
     hideStrip: function() {
