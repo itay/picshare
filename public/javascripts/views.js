@@ -656,7 +656,9 @@
       $(thumbView.el).addClass("thumb-selected");
       
       // Scroll to it
-      $(that.el).carousel('goToItem', $(thumbView.el), true);
+      _.defer(function() {
+        $(that.el).carousel('goToItem', $(thumbView.el), true);
+      });
     },
     
     add: function(pictures) {
@@ -685,7 +687,7 @@
       this.removeFromCarousel([view], true);
     },
     
-    reset: function() {      
+    reset: function() {     
       this.removeFromCarousel(this.thumbViews, true);
       this.thumbViews = {};
       
