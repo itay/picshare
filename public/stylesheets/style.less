@@ -39,14 +39,14 @@ select.xxxlarge {
   width: 912px;
 }
 
-////
+/////////// Progress Bar ////////////
 
   .progress-bar(@progressBarHeight, @thumbHeight) {
     height: @progressBarHeight;
     margin-top: @thumbHeight/2 - @progressBarHeight/2;
   }
 
-///
+/////////////////////////////////////
 
 /////////////////////////////////////
 
@@ -177,7 +177,7 @@ select.xxxlarge {
     #picture-info-container {
       margin-right: 20px; 
       position:relative;
-      z-index: 100;
+      z-index: 10;
       
       fieldset {
         margin-bottom: 0px; 
@@ -281,6 +281,10 @@ select.xxxlarge {
   
   @progressBarHeight: 15px;
   
+  @arrowWidth: 34px;
+  @arrowHeight: 22px;
+  @thumbMargin: 5px;
+  
   position: fixed;
   bottom: 0px;
   height: @thumbBarHeight;
@@ -290,16 +294,16 @@ select.xxxlarge {
   background: -webkit-linear-gradient(#fff, #ccc);
   box-shadow: 0 -6px 10px 0 rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   
   .pgbar {
     .progress-bar(@progressBarHeight, @thumbHeight)
   }
 
   ul#thumbs li {
+    position: relative;
     padding: 0px;
-    margin: 5px 5px 5px 0px;
+    margin: @thumbMargin @thumbMargin @thumbMargin 0px;
   }
 
   div.thumb {
@@ -316,11 +320,22 @@ select.xxxlarge {
     cursor: pointer;
     margin-bottom: 2px;
   }
-
-  .thumb-selected div.thumb-container img {
-    margin: -3px;
-    border: 3px solid @highlightColor;
-  }  
+  
+  .thumb-arrow {
+    z-index: 1000;
+    background: url(http://static.tumblr.com/njty47g/s9Nleufi1/quote_nipple.png) right top no-repeat; 
+    //background: red;
+    width: @arrowWidth;
+    height: @arrowHeight;
+    position: absolute; 
+    top: -@arrowHeight - @thumbMargin;
+    left: 2px + @thumbWidth / 2 - @arrowWidth / 2;
+    display: none;
+  }
+  
+  .thumb-selected .thumb-arrow {
+    display: block;
+  }
 }
 
 
@@ -381,20 +396,19 @@ select.xxxlarge {
 
 /* carousel */
 .rs-carousel {
-  overflow: hidden;
+  overflow-y: visible;
   margin-left: 5px;
   margin-right: 5px;
 }
     
 .rs-carousel .rs-carousel-mask {
   position:relative;
-  overflow:hidden;
-  /*border:6px solid #444;*/
+  overflow-y: visible;
   }
 
 .rs-carousel .rs-carousel-runner {
   position: absolute;
-  overflow: hidden;
+  overflow-y: visible;
   margin: 0;
   padding: 0;
   list-style: none;
