@@ -43,8 +43,13 @@
             croppedWidth = targetWidth = imageWidth;
             croppedHeight = targetHeight = imageHeight;
         }
+        
+        // Adjust the final height/width in case any of the dimensions is smaller
+        // than our target
+        var finalWidth = (targetWidth < croppedWidth ? targetWidth : croppedWidth);
+        var finalHeight = (targetHeight < croppedHeight ? targetHeight : croppedHeight);
 
-        var resized = new canvas(targetWidth, targetHeight);
+        var resized = new canvas(finalWidth, finalHeight);
         var context = resized.getContext('2d');
         
         context.drawImage(
@@ -52,8 +57,8 @@
             offsetCol, offsetRow, // source offset
             croppedWidth, croppedHeight,  // source size
             0, 0, // target offset
-            (targetWidth < croppedWidth ? targetWidth : croppedWidth), // target width
-            (targetHeight < croppedHeight ? targetHeight : croppedHeight)); // target height
+            finalWidth, // target width
+            finalHeight); // target height
         
         return resized;
     }  
