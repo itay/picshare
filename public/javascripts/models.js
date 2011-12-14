@@ -210,4 +210,31 @@
       return this.last() && picture.cid === this.last().cid;
     }
   });
+  
+  var DUMMY_ID = "DUMMY_ID";
+  
+  User = Backbone.Model.extend({
+    initialize: function() {
+      if (this.isNew()) {
+        this.set({"id": DUMMY_ID});
+      }
+    },
+    
+    save: function() {
+      if (this.get("id") === DUMMY_ID) {
+        this.set({"id": null});
+      }
+      
+      Backbone.Model.prototype.save.apply(this, arguments);
+    },
+    
+    url: function() {
+      if (this.isNew()) {
+        return "/register";
+      }
+      else {
+        return "/account";
+      }
+    }
+  })
 })();

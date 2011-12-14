@@ -13,6 +13,9 @@
     pictureView: $("#pictureViewTemplate"),
     actions: $("#actionsTemplate"),
     dropOverlay: $("#dropOverlayTemplate"),
+    contribute: $("#contributeModalTemplate"),
+    signinDropdown: $("#signinDropdownTemplate"),
+    signedinDropdown: $("#signedinDropdownTemplate"),
   };
   
   CommentView = Backbone.View.extend({
@@ -87,6 +90,7 @@
         // add it to the comments collection
         comment.save(null, {
           success: function() {
+            App.events.trigger("contribute");
             picture.comments.add(comment);
             that.clearForm();
           },
@@ -1013,6 +1017,14 @@
       
       _.bindAll(this, "show", "hide", "primaryClicked", "secondaryClicked");
       
+      var that = this;
+      $(this.el).bind('hide', function() {
+        that.isShown = false;
+      });
+      $(this.el).bind('show', function() {
+        that.isShown = true;
+      });
+      
       this.delegateEvents();
     },
     
@@ -1075,6 +1087,56 @@
     secondaryClicked: function(e) {
       e.preventDefault();
       this.hide();
+    }
+  });
+  
+  ContributeModalView = BootstrapModalView.extend({
+    
+    initialize: function() {
+      this.options.template = templates.contribute;
+      
+      _.bindAll(this, "register", "signin", "enterName");
+      
+      BootstrapModalView.prototype.initialize.call(this);
+    },
+    
+    events: {
+      "click a.register": "register",
+      "click a.signin": "signin",
+      "click a.contribute": "enterName",
+    },
+    
+    register: function(e) {
+      e.preventDefault();
+      
+      this.hide();
+      App.navigate("/register", true);
+    },
+    
+    signin: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      this.hide();
+      App.navView.showLogin();
+    },
+    
+    enterName: function(e) {
+      e.preventDefault();
+      
+      var name = this.$("#entername-input").val() || "Anonymous User";
+      
+      var user = App.user;
+      user.set({name: name});
+      user.save();
+      this.hide();
+    },
+    
+    show: function() {
+      if (!this.alreadyShown && (App.user.get("isAnonymous"))) {
+        this.alreadyShown = true;
+        BootstrapModalView.prototype.show.call(this);
+      }
     }
   });
   
@@ -1147,6 +1209,47 @@
     },
   });
   
+  NavBarView = Backbone.View.extend({
+    el: "#navbar",
+    
+    initialize: function() {
+      _.bindAll(this, "dropdownInputClicked", "render", "showLogin");
+      
+      App.events.bind("user:changed", this.render);
+    },
+    
+    events: {
+      "click .dropdown input": "dropdownInputClicked",
+      "click #signedin-dropdown li a.logout": "logout",
+    },
+    
+    logout: function(e) {
+      e.preventDefault();
+      console.log("LOGOUT!");
+    },
+    
+    render: function() {      
+      if (!App.user || App.user.get("isAnonymous")) {
+        this.$("ul.secondary-nav").html(templates.signinDropdown.tmpl());
+      }
+      else {
+        this.$("ul.secondary-nav").html(templates.signedinDropdown.tmpl()); 
+        
+        this.$("#user-info").text(App.user.get("name"));
+      }
+      
+      return this;
+    },
+    
+    dropdownInputClicked: function(e) {
+      e.stopPropagation();
+    },
+    
+    showLogin: function() {
+      this.$(".dropdown-toggle").click();
+    }
+  });
+  
   var savePicture = function(album, file, data) {
     var picture = new Picture(
       {
@@ -1164,6 +1267,8 @@
     var executeSave = function(notify) {
       picture.save(null, {
         success: function() {
+          App.events.trigger("contribute");
+          
           // OK, we've saved the data, now we can upload
           // the actual file
           album.pictures.add(picture);
@@ -1194,6 +1299,8 @@
     if (album.isNew() && !album.isCreating) {
       album.save({}, {
         success: function() {
+          App.events.trigger("contribute");
+          
           _.each(album.queue, function(fn) {
             fn();
           });
@@ -1225,18 +1332,34 @@
       
       _.bindAll(this, "index", "viewAlbum", "new", 
                 "hideAlbum", "showAlbum", 
-                "createAlbum", "renderAlbum", "createAndRenderAlbum");
+                "createAlbum", "renderAlbum", "createAndRenderAlbum",
+                "handleContribute", "account");
       
       // Create views
       this.uploadView = new UploadView();
+      this.navView = new NavBarView();
+      this.contributeModal = new ContributeModalView();
       
+      this.navView.render();
+      
+      this.registerFileUpload();
+      this.registerKeys();
+      
+      App.events.bind("album:hasPictures", this.viewAlbum)
+      App.events.bind("contribute", this.handleContribute);
+    },
+    
+    handleContribute: function() {
+      this.contributeModal.show();
+    },
+    
+    registerFileUpload: function() {      
       var that = this;
       $(document).bind("dragenter", function(e) {
         e.preventDefault();
         that.uploadView.show(true);
       });
       
-      var that = this;
       $("#file-upload").fileupload({
         namespace: "upload",
         add: function(e, data) {
@@ -1262,15 +1385,16 @@
           picture.trigger("upload:progress", data);
         }
       });
-      
+    },
+    
+    registerKeys: function() {
+      var that = this;
       key('left', function() {
         that.albumView.prevPicture();
       });
       key('right', function() {
         that.albumView.nextPicture();
       });
-      
-      App.events.bind("album:hasPictures", this.viewAlbum)
     },
     
     routes: {
@@ -1278,10 +1402,16 @@
       "/": "index",
       "/new": "new",
       "/new/": "new",
+      "/account": "account",
+      "/account/": "account",
       "/albums/:aid": "viewAlbum",
       "/albums/:aid/": "viewAlbum",
       "/albums/:aid/pictures/:pid": "viewAlbum",
       "/albums/:aid/pictures/:pid/": "viewAlbum"
+    },
+    
+    account: function() {
+      // DO NOTHING
     },
     
     index: function() {

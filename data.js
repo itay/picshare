@@ -52,9 +52,27 @@
         this.comments = {};
       },
       
-      createAlbum: function(albumInfo) {
+      remap: function(albums, pictures, comments, newUserId) {
+        albums = albums || [];
+        pictures = pictures || [];
+        comments = comments || [];
+        
+        var that = this;
+        _.each(albums, function(info) {
+          that.albums[info.album].createdBy = newUserId;
+        });
+        _.each(pictures, function(info) {
+          that.pictures[info.album][info.picture].createdBy = newUserId;
+        });
+        _.each(comments, function(info) {
+          that.comments[info.album][info.picture][info.comment].createdBy = newUserId;
+        });
+      },
+      
+      createAlbum: function(albumInfo, user) {
         albumInfo.created = currentDate();
         albumInfo.id = generateNextHash();
+        albumInfo.createdBy = user.id;
         
         this.albums[albumInfo.id] = albumInfo;
         this.pictures[albumInfo.id] = {};
@@ -97,12 +115,13 @@
       
       // callback gets three parameters, in order:
       // url, thumburl, normal size url
-      createPicture: function(albumId, pictureInfo, callback) {
+      createPicture: function(albumId, pictureInfo, user, callback) {
         var albumInfo = this.albums[albumId];
         albumInfo.modified = currentDate();
         
         pictureInfo.id = generateNextHash();
         pictureInfo.created = currentDate();
+        pictureInfo.createdBy = user.id;
         
         this.pictures[albumId][pictureInfo.id] = pictureInfo;
         this.comments[albumId][pictureInfo.id] = {};
@@ -228,7 +247,7 @@
         return this.pictures[albumId][pictureId];
       },
       
-      createPictureComment: function(albumId, pictureId, commentInfo) {
+      createPictureComment: function(albumId, pictureId, commentInfo, user) {
         var commentId = generateNextHash();
         this.comments[albumId][pictureId][commentId] = {
           id: commentId
@@ -240,6 +259,7 @@
         });
         currentInfo.created = currentDate();
         currentInfo.modified = currentDate();
+        currentInfo.createdBy = user.id;
         
         this.comments[albumId][pictureId][commentId] = currentInfo;
         
